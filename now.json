@@ -3,6 +3,7 @@
   "env": {
     "NODE_ENV": "production",
     "ENV1": "VAL1",
+    "SECRET_SL_REALTIME_API_KEY": "@secret_sl_realtime_api_key",
     "SECRET_FIREBASE": "@secret_firebase"
   },
   "engines": {

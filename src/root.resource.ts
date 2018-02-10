@@ -2,6 +2,7 @@ import * as KoaRouter from 'koa-router'
 import { DateTime } from 'luxon'
 import { api } from './api'
 import { env } from './environment/environment'
+import { processUtil } from './util/process.util'
 import { FORMAT_DATETIME_PRETTY, timeUtil } from './util/time.util'
 
 const router = new KoaRouter({
@@ -15,6 +16,7 @@ router.get('/', async ctx => {
     startedAtUTC: DateTime.fromMillis(api.serverStarted).toFormat(
       FORMAT_DATETIME_PRETTY,
     ),
+    mem: processUtil.memoryUsage(),
   }
 })
 

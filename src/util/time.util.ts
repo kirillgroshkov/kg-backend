@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon'
+
 export const FORMAT_DATETIME_PRETTY = 'yyyy-MM-dd HH:mm:ss'
 
 class TimeUtil {
@@ -10,6 +12,10 @@ class TimeUtil {
     if (d < 24) return `${d} hours`
     d = Math.round(d / 24)
     return `${d} days`
+  }
+
+  nowPretty (): string {
+    return DateTime.local().toFormat(FORMAT_DATETIME_PRETTY)
   }
 }
 

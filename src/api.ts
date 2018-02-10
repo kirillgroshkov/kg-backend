@@ -6,6 +6,7 @@ import * as koaLogger from 'koa-logger'
 import { memo } from './decorators/memo.decorator'
 import { editorResource } from './editor/editor.resource'
 import { rootResource } from './root.resource'
+import { slResource } from './sl/sl.resource'
 import { sentryService } from './srv/sentry.service'
 const koaCors = require('@koa/cors')
 
@@ -18,6 +19,7 @@ const MIDDLEWARES: Middleware[] = [
   // Resources
   rootResource,
   editorResource,
+  slResource,
 ]
 
 class Api {
