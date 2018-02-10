@@ -1,0 +1,50 @@
+
+# defaults:
+# label = name
+# id type = id
+# type = string
+
+collections:
+  - name: languages
+    icon: language
+    folders: false
+    fields:
+      - name: id
+        minLength: 2
+        maxLength: 2
+      - name: label
+        required: true
+
+  - name: menus
+    folders: true
+    fields:
+      - name: id
+      - name: label
+      - name: page
+        type: link
+
+  - name: pages
+    folders: true
+    fields:
+      - name: id
+      - name: lang
+        label: Language
+        descr: Page language
+        required: true
+        minLength: 2
+        maxLength: 2
+      - name: metaTitle
+        maxLength: 40
+      - name: metaDescription
+        maxLength: 140
+      - name: date1
+        type: date
+      - name: pub
+        label: Published
+        descr: If article is published
+        type: boolean
+      - name: content
+        type: markdown
+      - name: num1
+        type: number
+

@@ -1,0 +1,77 @@
+{
+  "name": "kg-backend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node dist/startServer.js",
+    "build": "rm -rf ./dist && tsc | cpx 'src/**/*.{graphql,graphqls,json,yaml,yml,html}' dist",
+    "now-build": "exit 0",
+    "precommit": "lint-staged",
+    "serve": "nodemon -e ts,js,json,graphql,graphqls --exec ts-node -- ./src/startServer.ts",
+    "tslint-all": "tslint 'src/**/*.{ts,tsx}' -t stylish --fix",
+    "prettier-do": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,scss,graphql,json}' '*.{md,js}'",
+    "prettier-all": "yarn prettier-do && yarn tslint-all",
+    "deploy": "yarn build && now remove kg-backend --yes && now --public --npm",
+    "alias": "now alias"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "tslint -t stylish --fix",
+      "git add"
+    ],
+    "src/**/*.{css,scss,graphql,json,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "dependencies": {
+    "@koa/cors": "^2.2.1",
+    "dotenv": "^5.0.0",
+    "firebase-admin": "^5.8.2",
+    "fs-extra": "^5.0.0",
+    "koa": "^2.4.1",
+    "koa-body": "^2.5.0",
+    "koa-json": "^2.0.2",
+    "koa-logger": "^3.1.0",
+    "koa-router": "^7.3.0",
+    "lodash.memoize": "^4.1.2",
+    "luxon": "^0.4.0",
+    "raven": "^2.4.1",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/bluebird": "^3.5.20",
+    "@types/cheerio": "^0.22.7",
+    "@types/fs-extra": "^5.0.0",
+    "@types/jest": "^22.1.1",
+    "@types/koa": "^2.0.42",
+    "@types/koa-json": "^2.0.18",
+    "@types/koa-logger": "^3.1.0",
+    "@types/koa-router": "^7.0.27",
+    "@types/luxon": "^0.2.2",
+    "@types/node": "^9.4.0",
+    "@types/nunjucks": "^3.0.0",
+    "@types/yargs": "^10.0.1",
+    "bluebird": "^3.5.1",
+    "cheerio": "^1.0.0-rc.2",
+    "del-cli": "^1.1.0",
+    "husky": "^0.14.3",
+    "jest": "^22.1.4",
+    "jest-fetch-mock": "^1.4.1",
+    "jest-junit": "^3.5.0",
+    "kg-dev": "^1.0.1",
+    "lint-staged": "^6.1.0",
+    "nunjucks": "^3.0.1",
+    "prettier": "^1.10.2",
+    "ts-jest": "^22.0.3",
+    "ts-node": "^4.1.0",
+    "tslint": "^5.9.1",
+    "tslint-eslint-rules": "^4.1.1",
+    "typescript": "~2.7.0",
+    "yargs": "^11.0.0"
+  },
+  "author": "Kirill Groshkov <1@inventix.ru>",
+  "license": "MIT"
+}

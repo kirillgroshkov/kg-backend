@@ -1,0 +1,16 @@
+{
+  "alias": "kg-backend",
+  "env": {
+    "NODE_ENV": "production",
+    "ENV1": "VAL1",
+    "SECRET_FIREBASE": "@secret_firebase"
+  },
+  "engines": {
+    "node": "8.9.4"
+  },
+  "files": [
+    "package.json",
+    "yarn.lock",
+    "dist"
+  ]
+}
