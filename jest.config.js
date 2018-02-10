@@ -8,7 +8,7 @@ module.exports = {
     '<rootDir>/src/shared/',
   ],
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json'],
-  testResultsProcessor: 'jest-junit',
+  // testResultsProcessor: 'jest-junit',
   skipNodeResolution: true,
   globals: {
     'ts-jest': {

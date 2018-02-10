@@ -21,9 +21,7 @@ class A {
   }
 }
 
-test()
-
-async function test () {
+test('a', async () => {
   // test('a', () => {
   const a = new A()
   console.log(a.a(1, 2))
@@ -41,4 +39,4 @@ async function test () {
   console.log(a.b(2, 3))
   console.log(a.b(2, 3))*/
   // })
-}
+})
