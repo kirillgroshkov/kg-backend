@@ -1,6 +1,6 @@
-import * as got from 'got'
 import { memo } from '../decorators/memo.decorator'
 import { secret } from '../environment/secret'
+import { gotService } from '../srv/got.service'
 import { timeUtil } from '../util/time.util'
 
 class SLApiService {
@@ -10,8 +10,7 @@ class SLApiService {
   async getDepartures (siteId: string, timeWindow: number = 30): Promise<any> {
     const url = `http://api.sl.se/api2/realtimedeparturesV4.json`
 
-    const r = await got(url, {
-      json: true,
+    const d = await gotService.get<any>(url, {
       query: {
         key: secret.SECRET_SL_REALTIME_API_KEY,
         siteId,
@@ -22,7 +21,7 @@ class SLApiService {
         Ship: false,
       },
     })
-    const d = r.body
+
     d['fetchedAt'] = timeUtil.nowPretty()
     return d
   }

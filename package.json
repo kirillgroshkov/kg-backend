@@ -13,8 +13,10 @@
     "prettier-do": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,scss,graphql,json}' '*.{md,js}'",
     "prettier-all": "yarn prettier-do && yarn tslint-all",
     "jest": "jest",
-    "deploy": "yarn build && now remove kg-backend --yes && now --public --npm",
-    "alias": "now alias"
+    "deploy": "yarn build && now --public --npm",
+    "deploy-replace": "yarn build && now remove kg-backend --yes && now --public --npm",
+    "alias": "now alias",
+    "logs": "now logs kg-backend.now.sh"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [

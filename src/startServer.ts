@@ -4,6 +4,7 @@ const bootstrapStarted = Date.now()
 import { api } from './api'
 import { env } from './environment/environment'
 import { loadSecretsFromEnv } from './environment/secret'
+import { dontsleepService } from './srv/dontsleep.service'
 import { sentryService } from './srv/sentry.service'
 
 if (!env().dev) {
@@ -29,6 +30,7 @@ async function setup (): Promise<void> {
   require('dotenv').config()
   loadSecretsFromEnv()
   sentryService.init()
+  if (env().prod) dontsleepService.start()
   // firestoreService.init()
   // securityService.cleanupEnv()
 }
