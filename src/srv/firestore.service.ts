@@ -1,21 +1,13 @@
 import { Firestore, QuerySnapshot } from '@google-cloud/firestore'
-import * as admin from 'firebase-admin'
 import { memo } from '../decorators/memo.decorator'
-import { secret } from '../environment/secret'
+import { firebaseService } from './firebase.service'
+import { log } from './log.service'
 
 class FirestoreService {
   @memo()
   db (): Firestore {
-    console.log('FirestoreService init...')
-    const serviceAccount = JSON.parse(
-      Buffer.from(secret.SECRET_FIREBASE, 'base64').toString('utf8'),
-    )
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    })
-
-    return admin.firestore()
+    log('FirestoreService init...')
+    return firebaseService.admin().firestore()
   }
 
   async getCollectionData (colName: string): Promise<any> {

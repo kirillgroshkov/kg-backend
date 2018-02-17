@@ -3,12 +3,14 @@ import * as Koa from 'koa'
 import * as koaBody from 'koa-body'
 import * as koaJson from 'koa-json'
 import * as koaLogger from 'koa-logger'
+import { staticDir } from './cnst/paths.cnst'
 import { memo } from './decorators/memo.decorator'
 import { editorResource } from './editor/editor.resource'
 import { rootResource } from './root.resource'
 import { slResource } from './sl/sl.resource'
 import { sentryService } from './srv/sentry.service'
 const koaCors = require('@koa/cors')
+const koaStatic = require('koa-static')
 
 const MIDDLEWARES: Middleware[] = [
   // Middlewares
@@ -16,6 +18,8 @@ const MIDDLEWARES: Middleware[] = [
   koaBody(),
   koaJson(),
   koaCors(),
+  // serveFile('/login', staticDir + '/login.html'),
+  koaStatic(staticDir),
   // Resources
   rootResource,
   editorResource,

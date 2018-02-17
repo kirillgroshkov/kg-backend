@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+  <title>Login</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@2.2.0/src/js.cookie.min.js"></script>
+  <script src="https://unpkg.com/vue@2.5.13/dist/vue.js"></script>
+
+  <link href="https://unpkg.com/bootstrap@4.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="app" style="padding: 40px 50px;">
+  <pre v-if="loading">Checking login...</pre>
+  <div v-else>
+    <div v-if="user">
+      <p>Logged in as:</p>
+      <pre><mark>{{ user.email }}</mark></pre>
+      <!--<pre><mark>{{ user.token }}</mark></pre>-->
+      <button class="btn btn-primary btn-lg" @click="logout">Logout</button>
+    </div>
+    <div v-else>
+      <button class="btn btn-primary btn-lg" @click="login" id="loginBtn">Login</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function logError(err) {
+    console.error(err)
+    alert('Error\n ' + JSON.stringify(err, null, 2))
+  }
+
+  const cookieName = 'kg_admin_token'
+  const googleAuthProvider = new firebase.auth.GoogleAuthProvider();
+  const qs = parseQuery(location.search)
+  // console.log(qs)
+
+  const app = new Vue({
+    el: '#app',
+
+    data: {
+      loading: 'Loading...',
+      user: undefined,
+    },
+
+    methods: {
+      login: function () {
+        firebase.auth()
+          .signInWithRedirect(googleAuthProvider)
+          .catch(err => logError(err))
+
+        /*
+        firebase.auth().signInWithPopup(googleAuthProvider).catch(err => {
+          if (err.code === 'auth/popup-blocked') {
+            firebase.auth().signInWithRedirect(googleAuthProvider)
+              .catch(err => logError(err))
+          } else {
+            logError(err)
+          }
+        })
+        */
+      },
+
+      logout: function () {
+        Cookies.remove(cookieName)
+        firebase.auth().signOut()
+          .then(() => {
+            if (qs.logout && qs.return) {
+              alert('Logged out, redurecting back...')
+              location.href = qs.return
+            }
+          })
+          .catch(err => logError(err))
+      },
+    },
+  })
+
+  // Initialize Firebase
+  const config = {
+    apiKey: "AIzaSyC_ooKU2uYbczwRQVfAa6VjGbxfkV-9cYI",
+    authDomain: "test124-1621f.firebaseapp.com",
+  };
+  firebase.initializeApp(config);
+
+  firebase.auth().onAuthStateChanged(user => {
+    // console.log('onAuthStateChanged, user: ', JSON.stringify(user, null, 2))
+    console.log('onAuthStateChanged, user: ', user)
+    onUser(user)
+  });
+
+  function onUser (user) {
+    // alert('onUser')
+    app.user = user
+    app.loading = false
+    if (!user) {
+      if (qs.autoLogin) app.login()
+    } else {
+      firebase.auth().currentUser.getIdToken(true)
+        .then(idToken => {
+          // alert('idToken')
+          // console.log(idToken)
+          app.user = {
+            ...app.user,
+            token: idToken
+          }
+          Cookies.set(cookieName, idToken, {
+            // secure: true,
+          })
+
+          if (qs.return) {
+            // alert(`Logged in as ${app.user.email}, redirecting back...`)
+            location.href = qs.return
+          }
+        })
+        .catch(err => logError(err))
+    }
+  }
+
+  // console.log('cookies all', Cookies.get())
+  // alert('qs:\n' + JSON.stringify(qs, null, 2))
+
+  /*
+  firebase.auth().getRedirectResult()
+    .then(r => {
+      app.loading = false
+      console.log('redirectResult', r)
+      alert('redirResult:\n' + JSON.stringify(r, null, 2))
+      if (r && r.user) {
+        onUser(r.user)
+      } else {
+        // if (qs.autoLogin) app.login()
+      }
+    })*/
+
+  if (qs.logout) app.logout()
+
+  ////
+
+  function parseQuery (queryString) {
+    var query = {};
+    var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+    for (var i = 0; i < pairs.length; i++) {
+      var pair = pairs[i].split('=');
+      query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+    }
+    return query;
+  }
+</script>
+</body>
+</html>
