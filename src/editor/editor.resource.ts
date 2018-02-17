@@ -38,7 +38,7 @@ router.put('/:project/data/:colName', async ctx => {
   ctx.body = await editorService.saveData(
     ctx.params.project,
     ctx.params.colName,
-    ctx.requrest.body,
+    ctx.request.body,
   )
 })
 
