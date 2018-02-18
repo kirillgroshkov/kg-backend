@@ -23,8 +23,8 @@ jobs:
           key: dependencies-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-v1-{{ checksum "yarn.lock" }}
 
       - run:
-        name: Deploy
-        command: |
-          yarn build && now -t $NOW_TOKEN remove kg-backend --yes && now -t $NOW_TOKEN --public --npm
-          sleep 60
-          now alias -t $NOW_TOKEN
+          name: Deploy
+          command: |
+            yarn build && now -t $NOW_TOKEN remove kg-backend --yes && now -t $NOW_TOKEN --public --npm
+            sleep 60
+            now alias -t $NOW_TOKEN
