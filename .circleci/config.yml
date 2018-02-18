@@ -16,7 +16,6 @@ jobs:
       - restore_cache:
           key: dependencies-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-v1-{{ checksum "yarn.lock" }}
       - run: yarn --pure-lockfile
-      - run: yarn add now # will be cached
       - save_cache:
           paths:
             - node_modules
@@ -25,6 +24,7 @@ jobs:
       - run:
           name: Deploy
           command: |
+            yarn global add now@9.3.2
             yarn build && now -t $NOW_TOKEN remove kg-backend --yes && now -t $NOW_TOKEN --public --npm
             sleep 60
             now alias -t $NOW_TOKEN
