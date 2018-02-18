@@ -20,8 +20,14 @@ collections:
     fields:
       - name: id
       - name: label
+      - name: component
+      - name: segment
       - name: page
         type: link
+      - name: pub
+        type: boolean
+      - name: order
+        type: number
 
   - name: pages
     folders: true

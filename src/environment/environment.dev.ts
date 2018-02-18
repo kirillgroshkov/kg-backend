@@ -6,6 +6,8 @@ export class EnvironmentDev extends EnvironmentProd {
   dev = true
 
   sentryDsn = undefined
+
+  // authEnabled = false
 }
 
 export default new EnvironmentDev()

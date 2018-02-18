@@ -40,6 +40,12 @@ router.get('/debug', adminMiddleware(), async ctx => {
   }
 })
 
+router.get('/loginInfo', async ctx => {
+  ctx.body = {
+    login: await adminService.getAdminInfo(ctx),
+  }
+})
+
 router.get('/login', async ctx => {
   ctx.body = await fs.readFile(staticDir + '/login.html', 'utf-8')
 })

@@ -17,7 +17,9 @@ const MIDDLEWARES: Middleware[] = [
   koaLogger(),
   koaBody(),
   koaJson(),
-  koaCors(),
+  koaCors({
+    credentials: true,
+  }),
   // serveFile('/login', staticDir + '/login.html'),
   koaStatic(staticDir),
   // Resources

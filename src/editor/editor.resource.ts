@@ -1,10 +1,10 @@
 import * as KoaRouter from 'koa-router'
-import { firestoreService } from '../srv/firestore.service'
+import { adminMiddleware } from '../mw/admin.mw'
 import { editorService } from './editor.service'
 
 const router = new KoaRouter({
   prefix: '/editor',
-})
+}).use(adminMiddleware())
 export const editorResource = router.routes()
 
 router.get('/:project/schema', async ctx => {

@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@koa/cors": "^2.2.1",
+    "bluebird": "^3.5.1",
     "dotenv": "^5.0.0",
     "firebase-admin": "^5.8.2",
     "fs-extra": "^5.0.0",
@@ -61,7 +62,6 @@
     "@types/node": "^9.4.0",
     "@types/nunjucks": "^3.0.0",
     "@types/yargs": "^10.0.1",
-    "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
     "del-cli": "^1.1.0",
     "husky": "^0.14.3",
