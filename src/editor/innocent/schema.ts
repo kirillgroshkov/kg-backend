@@ -1,17 +1,8 @@
+import { AppSchema } from '../schema.service'
 
-# defaults:
-# label = name
-# id type = id
-# type = string
+// idea: have schema as ts file, ts gives type validation
 
-types:
-  - name: language
-    fields:
-      - name: id
-        minLength: 2
-        maxLength: 2
-      - name: label
-        required: true
+/*
 
   - name: menu
     fields:
@@ -55,29 +46,25 @@ types:
         type: markdown
       - name: num1
         type: number
+ */
 
-  - name: menu2
-    fields:
-      - name: component
-      - name: segment
-      - name: aaaa
-        type: objtype2
+export const schema: AppSchema = {
+  types: [
+    {
+      name: 'language',
+      fields: [
+        {
+          name: 'id',
+          minLength: 2,
+          maxLength: 2,
+        },
+        {
+          name: 'label',
+          required: true,
+        },
+      ],
+    },
+  ],
 
-  - name: objtype2
-    fields:
-      - name: field1
-      - name: field2
-
-collections:
-  - name: languages
-    icon: language
-    folders: false
-    type: language
-
-  - name: menus
-    folders: true
-    type: menu
-
-  - name: pages
-    folders: true
-    type: page
+  collections: [],
+}

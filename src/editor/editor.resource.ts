@@ -4,10 +4,10 @@ import { editorService } from './editor.service'
 
 const router = new KoaRouter({
   prefix: '/editor',
-}).use(adminMiddleware())
+})
 export const editorResource = router.routes()
 
-router.get('/:project/schema', async ctx => {
+router.get('/:project/schema', adminMiddleware(), async ctx => {
   const schema = await editorService.getSchema(ctx.params.project)
   if (!schema) ctx.throw(404)
   ctx.body = schema
@@ -34,7 +34,7 @@ router.get('/:project/data/:colName', async ctx => {
   ctx.body = await editorService.getData(ctx.params.project, ctx.params.colName)
 })
 
-router.put('/:project/data/:colName', async ctx => {
+router.put('/:project/data/:colName', adminMiddleware(), async ctx => {
   ctx.body = await editorService.saveData(
     ctx.params.project,
     ctx.params.colName,
@@ -42,7 +42,7 @@ router.put('/:project/data/:colName', async ctx => {
   )
 })
 
-router.delete('/:project/data/:colName/:id', async ctx => {
+router.delete('/:project/data/:colName/:id', adminMiddleware(), async ctx => {
   ctx.body = await editorService.deleteData(
     ctx.params.project,
     ctx.params.colName,
