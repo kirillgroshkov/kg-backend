@@ -26,5 +26,5 @@ jobs:
           command: |
             yarn global add now@9.3.2
             yarn build && now -t $NOW_TOKEN remove kg-backend --yes && now -t $NOW_TOKEN --public --npm
-            sleep 60
+            #sleep 60
             now alias -t $NOW_TOKEN
