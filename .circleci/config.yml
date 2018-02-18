@@ -1,0 +1,30 @@
+#
+# validate yml:
+# circleci config validate -c .circleci/config.yml
+#
+
+version: 2
+jobs:
+  build:
+    docker:
+      - image: naturalcycles/ci-slim:latest
+    working_directory: ~/repo
+    steps:
+      - checkout
+      # env variables
+      - run: echo 'export GIT_MSG=`git log -1 --pretty=%B`' >> $BASH_ENV
+      - restore_cache:
+          key: dependencies-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-v1-{{ checksum "yarn.lock" }}
+      - run: yarn --pure-lockfile
+      - run: yarn add now # will be cached
+      - save_cache:
+          paths:
+            - node_modules
+          key: dependencies-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-v1-{{ checksum "yarn.lock" }}
+
+      - run:
+        name: Deploy
+        command: |
+          yarn build && now -t $NOW_TOKEN remove kg-backend --yes && now -t $NOW_TOKEN --public --npm
+          sleep 60
+          now alias -t $NOW_TOKEN
