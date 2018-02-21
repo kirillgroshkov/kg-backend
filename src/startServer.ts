@@ -1,11 +1,11 @@
 console.log('startServer...')
 const bootstrapStarted = Date.now()
 
-import { api } from './api'
-import { env } from './environment/environment'
-import { loadSecretsFromEnv } from './environment/secret'
-import { dontsleepService } from './srv/dontsleep.service'
-import { sentryService } from './srv/sentry.service'
+import { api } from '@src/api'
+import { env } from '@src/environment/environment'
+import { loadSecretsFromEnv } from '@src/environment/secret'
+import { dontsleepService } from '@src/srv/dontsleep.service'
+import { sentryService } from '@src/srv/sentry.service'
 
 if (!env().dev) {
   console.log(env())

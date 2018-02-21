@@ -1,7 +1,7 @@
+import { rootDir } from '@src/cnst/paths.cnst'
+import { firestoreService } from '@src/srv/firestore.service'
 import * as P from 'bluebird'
 import * as fs from 'fs-extra'
-import { rootDir } from '../cnst/paths.cnst'
-import { firestoreService } from '../srv/firestore.service'
 const yamljs = require('yamljs')
 
 class EditorService {

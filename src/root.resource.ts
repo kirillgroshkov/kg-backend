@@ -1,13 +1,13 @@
+import { api } from '@src/api'
+import { staticDir } from '@src/cnst/paths.cnst'
+import { env } from '@src/environment/environment'
+import { adminMiddleware } from '@src/mw/admin.mw'
+import { adminService } from '@src/srv/admin.service'
+import { processUtil } from '@src/util/process.util'
+import { FORMAT_DATETIME_PRETTY, timeUtil } from '@src/util/time.util'
 import * as fs from 'fs-extra'
 import * as KoaRouter from 'koa-router'
 import { DateTime } from 'luxon'
-import { api } from './api'
-import { staticDir } from './cnst/paths.cnst'
-import { env } from './environment/environment'
-import { adminMiddleware } from './mw/admin.mw'
-import { adminService } from './srv/admin.service'
-import { processUtil } from './util/process.util'
-import { FORMAT_DATETIME_PRETTY, timeUtil } from './util/time.util'
 
 const router = new KoaRouter({
   prefix: '',

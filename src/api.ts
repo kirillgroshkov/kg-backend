@@ -1,14 +1,14 @@
+import { staticDir } from '@src/cnst/paths.cnst'
+import { memo } from '@src/decorators/memo.decorator'
+import { editorResource } from '@src/editor/editor.resource'
+import { rootResource } from '@src/root.resource'
+import { slResource } from '@src/sl/sl.resource'
+import { sentryService } from '@src/srv/sentry.service'
 import { Middleware } from 'koa'
 import * as Koa from 'koa'
 import * as koaBody from 'koa-body'
 import * as koaJson from 'koa-json'
 import * as koaLogger from 'koa-logger'
-import { staticDir } from './cnst/paths.cnst'
-import { memo } from './decorators/memo.decorator'
-import { editorResource } from './editor/editor.resource'
-import { rootResource } from './root.resource'
-import { slResource } from './sl/sl.resource'
-import { sentryService } from './srv/sentry.service'
 const koaCors = require('@koa/cors')
 const koaStatic = require('koa-static')
 

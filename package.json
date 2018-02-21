@@ -4,17 +4,17 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node dist/startServer.js",
+    "start": "node -r tsconfig-paths/register dist/startServer.js",
     "build": "rm -rf ./dist && tsc | cpx 'src/**/*.{graphql,graphqls,json,yaml,yml,html}' dist",
     "now-build": "exit 0",
     "precommit": "lint-staged",
-    "serve": "nodemon -e ts,js,json,graphql,graphqls --exec ts-node -- ./src/startServer.ts",
+    "serve": "nodemon -e ts,js,json,graphql,graphqls --exec ts-node -- --preserve-symlinks -r tsconfig-paths/register ./src/startServer.ts",
     "tslint-all": "tslint 'src/**/*.{ts,tsx}' -t stylish --fix",
     "prettier-do": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,scss,graphql,json}' '*.{md,js}'",
     "prettier-all": "yarn prettier-do && yarn tslint-all",
     "jest": "jest",
-    "deploy": "yarn build && now --public --npm",
-    "deploy-replace": "yarn build && now remove kg-backend --yes && now --public --npm",
+    "deploy": "yarn build && now --public --npm && now alias",
+    "deploy-replace": "yarn build && now remove kg-backend --yes && now --public --npm && now alias",
     "alias": "now alias",
     "logs": "now logs kg-backend.now.sh"
   },
@@ -45,6 +45,7 @@
     "lru-cache": "^4.1.1",
     "luxon": "^0.4.0",
     "raven": "^2.4.1",
+    "tsconfig-paths": "^3.1.1",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
@@ -73,7 +74,7 @@
     "nunjucks": "^3.0.1",
     "prettier": "^1.10.2",
     "ts-jest": "^22.0.3",
-    "ts-node": "^4.1.0",
+    "ts-node": "^5.0.0",
     "tslint": "^5.9.1",
     "tslint-eslint-rules": "^4.1.1",
     "typescript": "~2.7.0",

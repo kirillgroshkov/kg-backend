@@ -1,6 +1,6 @@
+import { editorService } from '@src/editor/editor.service'
+import { adminMiddleware } from '@src/mw/admin.mw'
 import * as KoaRouter from 'koa-router'
-import { adminMiddleware } from '../mw/admin.mw'
-import { editorService } from './editor.service'
 
 const router = new KoaRouter({
   prefix: '/editor',

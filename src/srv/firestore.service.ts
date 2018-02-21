@@ -1,7 +1,7 @@
 import { Firestore, QuerySnapshot } from '@google-cloud/firestore'
-import { memo } from '../decorators/memo.decorator'
-import { firebaseService } from './firebase.service'
-import { log } from './log.service'
+import { memo } from '@src/decorators/memo.decorator'
+import { firebaseService } from '@src/srv/firebase.service'
+import { log } from '@src/srv/log.service'
 
 class FirestoreService {
   @memo()

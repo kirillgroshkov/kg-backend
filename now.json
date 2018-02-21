@@ -12,6 +12,7 @@
   "files": [
     "package.json",
     "yarn.lock",
+    "tsconfig.json",
     "dist"
   ]
 }
