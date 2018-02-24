@@ -1,4 +1,5 @@
 import { schemaService } from '@src/editor/schema.service'
+import { AppError } from '@src/error/app.error'
 import { firestoreService } from '@src/srv/firestore.service'
 import * as P from 'bluebird'
 
@@ -19,6 +20,7 @@ class EditorService {
   }
 
   async saveData (project: string, colName: string, body: any): Promise<any> {
+    if (!body.id) throw new AppError('id should be defined')
     console.log(`saving ${colName}/${body.id}`)
     return await firestoreService.saveDoc(`${project}_${colName}`, body)
   }

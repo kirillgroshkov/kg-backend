@@ -9,7 +9,7 @@ const router = new KoaRouter({
 })
 export const editorResource = router.routes()
 
-router.get('/:project/schema', adminMiddleware(), async ctx => {
+router.get('/:project/schema', async ctx => {
   const schema = await schemaService.getSchema(ctx.params.project)
   if (!schema) ctx.throw(404)
   schemaValidationService.validate('AppSchema', schema)
