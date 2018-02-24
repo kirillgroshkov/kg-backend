@@ -18,8 +18,10 @@ class ProcessUtil {
   }
 
   cpuAvg (): any {
+    const cpus = os.cpus()
     const avg = os.loadavg()
     return {
+      cores: `${cpus.length} x ${cpus[0].model}`,
       avg1: avg[0].toFixed(2),
       avg5: avg[1].toFixed(2),
       avg15: avg[2].toFixed(2),
