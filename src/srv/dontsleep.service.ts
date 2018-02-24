@@ -5,7 +5,7 @@ class DontsleepService {
   @memo()
   start (): void {
     setInterval(async () => {
-      await gotService.get(process.env.NOW_URL!)
+      await gotService.get(process.env.NOW_URL!).catch(err => {})
     }, 60000)
   }
 }
