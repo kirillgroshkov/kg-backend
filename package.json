@@ -32,6 +32,8 @@
   "dependencies": {
     "@koa/cors": "^2.2.1",
     "bluebird": "^3.5.1",
+    "class-transformer": "^0.1.9",
+    "class-validator": "^0.8.1",
     "dotenv": "^5.0.0",
     "firebase-admin": "^5.8.2",
     "fs-extra": "^5.0.0",
@@ -43,8 +45,9 @@
     "koa-router": "^7.3.0",
     "koa-static": "^4.0.2",
     "lru-cache": "^4.1.1",
-    "luxon": "^0.4.0",
+    "luxon": "^0.5.3",
     "raven": "^2.4.1",
+    "reflect-metadata": "^0.1.12",
     "tsconfig-paths": "^3.1.1",
     "yamljs": "^0.3.0"
   },

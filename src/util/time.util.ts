@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
 
+export const LUXON_ISO_DATE_FORMAT = 'yyyy-MM-dd'
 export const FORMAT_DATETIME_PRETTY = 'yyyy-MM-dd HH:mm:ss'
 
 class TimeUtil {

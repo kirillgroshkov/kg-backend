@@ -6,6 +6,7 @@ import { env } from '@src/environment/environment'
 import { loadSecretsFromEnv } from '@src/environment/secret'
 import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
+import 'reflect-metadata'
 
 if (!env().dev) {
   console.log(env())
