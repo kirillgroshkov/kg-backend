@@ -1,0 +1,94 @@
+{
+  "type": "object",
+  "properties": {
+    "types": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SchemaType"
+      }
+    },
+    "collections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Collection"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": ["collections", "types"],
+  "definitions": {
+    "SchemaType": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": ["fields", "name"]
+    },
+    "Field": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "minLength": {
+          "type": "number"
+        },
+        "maxLength": {
+          "type": "number"
+        },
+        "objectOf": {
+          "type": "string"
+        },
+        "arrayOf": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["name"]
+    },
+    "Collection": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "folders": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["name", "type"]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-04/schema#"
+}

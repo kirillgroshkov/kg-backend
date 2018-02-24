@@ -1,4 +1,6 @@
 import * as path from 'path'
 
-export const rootDir = path.join(__dirname, '/..')
-export const staticDir = path.join(__dirname, '/../static')
+export const projectDir = path.join(__dirname, '/../..')
+export const rootDir = projectDir + '/src'
+export const staticDir = rootDir + '/static'
+export const schemaDir = rootDir + '/schema'

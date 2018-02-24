@@ -1,3 +1,8 @@
+import { rootDir } from '@src/cnst/paths.cnst'
+import { AppError } from '@src/error/app.error'
+import * as fs from 'fs-extra'
+const yamljs = require('yamljs')
+
 export interface AppSchema {
   types: SchemaType[]
   collections: Collection[]
@@ -30,6 +35,13 @@ export interface Field {
   arrayOf?: string
 }
 
-class SchemaService {}
+class SchemaService {
+  async getSchema (project: string): Promise<AppSchema> {
+    const schemaFile = `${rootDir}/editor/${project}/schema.yaml`
+    if (!await fs.pathExists(schemaFile))
+      throw new AppError(`Cannot find schema file: ${schemaFile}`)
+    return yamljs.load(schemaFile)
+  }
+}
 
 export const schemaService = new SchemaService()

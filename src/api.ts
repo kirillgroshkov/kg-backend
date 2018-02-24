@@ -1,6 +1,7 @@
 import { staticDir } from '@src/cnst/paths.cnst'
 import { memo } from '@src/decorators/memo.decorator'
 import { editorResource } from '@src/editor/editor.resource'
+import { errorHandlerMiddleware } from '@src/mw/errorHandler.mw'
 import { rootResource } from '@src/root.resource'
 import { slResource } from '@src/sl/sl.resource'
 import { sentryService } from '@src/srv/sentry.service'
@@ -14,6 +15,7 @@ const koaStatic = require('koa-static')
 
 const MIDDLEWARES: Middleware[] = [
   // Middlewares
+  errorHandlerMiddleware(),
   koaLogger(),
   koaBody(),
   koaJson(),
@@ -40,7 +42,7 @@ class Api {
     MIDDLEWARES.forEach(r => app.use(r))
 
     app.on('error', err => {
-      console.log('Koa app on-error: ', err)
+      console.log(err)
       sentryService.captureException(err)
     })
 

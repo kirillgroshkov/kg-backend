@@ -1,18 +1,10 @@
-import { rootDir } from '@src/cnst/paths.cnst'
+import { schemaService } from '@src/editor/schema.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import * as P from 'bluebird'
-import * as fs from 'fs-extra'
-const yamljs = require('yamljs')
 
 class EditorService {
-  async getSchema (project: string): Promise<any> {
-    const schemaFile = `${rootDir}/editor/${project}/schema.yaml`
-    if (!await fs.pathExists(schemaFile)) return
-    return yamljs.load(schemaFile)
-  }
-
   async getAllData (project: string): Promise<any> {
-    const schema = await this.getSchema(project)
+    const schema = await schemaService.getSchema(project)
     const colNames: string[] = schema.collections.map((c: any) => c.name)
     const props: { [c: string]: Promise<any> } = {}
     colNames.forEach(c => {

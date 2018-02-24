@@ -1,5 +1,7 @@
 import { editorService } from '@src/editor/editor.service'
+import { schemaService } from '@src/editor/schema.service'
 import { adminMiddleware } from '@src/mw/admin.mw'
+import { schemaValidationService } from '@src/validation/schemaValidation.service'
 import * as KoaRouter from 'koa-router'
 
 const router = new KoaRouter({
@@ -8,8 +10,9 @@ const router = new KoaRouter({
 export const editorResource = router.routes()
 
 router.get('/:project/schema', adminMiddleware(), async ctx => {
-  const schema = await editorService.getSchema(ctx.params.project)
+  const schema = await schemaService.getSchema(ctx.params.project)
   if (!schema) ctx.throw(404)
+  schemaValidationService.validate('AppSchema', schema)
   ctx.body = schema
 })
 
