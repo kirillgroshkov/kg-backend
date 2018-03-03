@@ -105,10 +105,9 @@
         .then(idToken => {
           // alert('idToken')
           // console.log(idToken)
-          app.user = {
-            ...app.user,
-            token: idToken
-          }
+          Object.assign(app.user, {
+            token: idToken,
+          })
           Cookies.set(cookieName, idToken, {
             // secure: true,
           })
