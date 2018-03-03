@@ -16,6 +16,7 @@ types:
   - name: menu
     fields:
       - name: id
+        descr: sdfsdf
       - name: items
         type: array
         arrayOf: menuItem

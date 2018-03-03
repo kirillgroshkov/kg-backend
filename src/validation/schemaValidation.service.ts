@@ -26,6 +26,7 @@ class SchemaValidationService {
       // unknownFormats: 'ignore',  // optional, current default is true (fail)
     })
 
+    ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-06.json'))
     // const metaSchema = require('ajv/lib/refs/json-schema-draft-04.json')
     // ajv.addMetaSchema(metaSchema)
     // ;(ajv as any)._opts.defaultMeta = metaSchema.id
@@ -39,11 +40,10 @@ class SchemaValidationService {
 
   @memo()
   private getFn (type: string): ValidateFunction | undefined {
+    console.log(`Loading ${type}.schema.json...`)
     const schemaFile = `${schemaDir}/${type}.schema.json`
     if (!fs.existsSync(schemaFile)) return
     const s = fs.readJsonSync(schemaFile)
-    delete s['$schema'] // to fix ajv incompatibility error
-    // console.log('$SCHEMA!!!', s)
     return this.ajv().compile(s)
   }
 

@@ -25,6 +25,7 @@ export interface Collection {
 export interface Field {
   name: string
   label?: string
+  descr?: string
   type?: string
   required?: boolean
 

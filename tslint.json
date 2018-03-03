@@ -1,5 +1,5 @@
 {
   "extends": [
-    "./node_modules/kg-dev/tslint.json"
+    "./node_modules/@naturalcycles/shared-dev/tslint.json"
   ]
 }
