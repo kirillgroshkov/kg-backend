@@ -18,28 +18,24 @@ types:
       - name: id
         descr: Unique identifier of menu in the code
         #protected: true
-      - name: second
-        required: true
-        minLength: 4
-        maxLength: 7
       - name: items
+        label: Menu items
         type: array
         arrayOf: menuItem
-      - name: third
-        required: true
-#      - name: obj
-#        type: menuItem
-#      - name: label
-#      - name: component
-#      - name: segment
-#      - name: page
-#        type: link
-#      - name: pub
-#        type: boolean
-#      - name: order
-#        type: number
 
   - name: page
+    folders: true
+    fields:
+      - name: id
+        descr: Internal name, not used
+      - name: url
+        required: true
+      - name: component
+        required: true
+      - name: segment
+
+
+  - name: page2
     folders: true
     fields:
       - name: id
@@ -68,15 +64,33 @@ types:
     label: Menu item
     fields:
       - name: label
-#      - name: component
-#      - name: segment
+        required: true
       - name: url
         required: true
-        minLength: 4
-#      - name: page
-#        type: link
       - name: pub
         type: boolean
+        def: true
+
+  - name: imageGroup
+    label: Image group
+    fields:
+      - name: id
+        descr: Should match folder in cloudinary
+        required: true
+      - name: images
+        type: array
+        arrayOf: image
+
+  - name: image
+    label: Image
+    fields:
+      - name: filename
+        required: true
+      - name: res
+        label: Resolution
+        required: true
+      - name: alt
+        label: Description
 
   - name: objtype2
     fields:
@@ -96,3 +110,7 @@ collections:
   - name: pages
     folders: true
     type: page
+
+  - name: imageGroups
+    label: Image groups
+    type: imageGroup
