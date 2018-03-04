@@ -16,10 +16,17 @@ types:
   - name: menu
     fields:
       - name: id
-        descr: sdfsdf
+        descr: Unique identifier of menu in the code
+        #protected: true
+      - name: second
+        required: true
+        minLength: 4
+        maxLength: 7
       - name: items
         type: array
         arrayOf: menuItem
+      - name: third
+        required: true
 #      - name: obj
 #        type: menuItem
 #      - name: label
@@ -64,6 +71,8 @@ types:
 #      - name: component
 #      - name: segment
       - name: url
+        required: true
+        minLength: 4
 #      - name: page
 #        type: link
       - name: pub

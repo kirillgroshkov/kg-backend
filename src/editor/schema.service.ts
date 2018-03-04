@@ -27,6 +27,7 @@ export interface Field {
   label?: string
   descr?: string
   type?: string
+  protected?: boolean
   required?: boolean
 
   minLength?: number
