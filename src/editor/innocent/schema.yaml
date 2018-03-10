@@ -67,6 +67,7 @@ types:
         required: true
       - name: url
         required: true
+        labelField: true
       - name: pub
         type: boolean
         def: true
@@ -86,6 +87,7 @@ types:
     fields:
       - name: filename
         required: true
+        labelField: true
       - name: res
         label: Resolution
         required: true

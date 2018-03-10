@@ -30,6 +30,7 @@ export interface Field {
   def?: any
   protected?: boolean
   required?: boolean
+  labelField?: boolean
 
   minLength?: number
   maxLength?: number
