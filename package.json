@@ -12,7 +12,8 @@
     "tslint-all": "tslint 'src/**/*.{ts,tsx}' -t stylish --fix",
     "prettier-do": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,scss,graphql,json}' '*.{md,js}'",
     "prettier-all": "yarn prettier-do && yarn tslint-all",
-    "jest": "jest",
+    "test": "jest",
+    "upgrade-shared": "yarn upgrade kg-shared @naturalcycles/shared-dev",
     "deploy": "yarn build && now --public --npm && now alias",
     "deploy-replace": "yarn build && now remove kg-backend --yes && now --public --npm && now alias",
     "alias": "now alias",
@@ -58,7 +59,6 @@
     "jest": "^22.1.4",
     "jest-fetch-mock": "^1.4.1",
     "jest-junit": "^3.5.0",
-    "kg-dev": "^1.0.1",
     "ts-jest": "^22.0.3",
     "typescript": "~2.7.0",
     "typescript-json-schema": "^0.21.0"
