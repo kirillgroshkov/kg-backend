@@ -36,6 +36,7 @@ const MIDDLEWARES: Middleware[] = [
 class Api {
   serverStarted: number = undefined as any
   serverStartedMillis: number = undefined as any
+  io: SocketIO.Server = undefined as any
 
   @memo()
   app (): Koa {
@@ -53,18 +54,18 @@ class Api {
   }
 
   private setupSocketIo (server: Server): void {
-    const io = socketIo(server)
-    io.on('connection', socket => {
-      console.log('io connection')
+    this.io = socketIo(server)
+    this.io.on('connection', socket => {
+      console.log('io connection: ' + socket.id)
 
-      const i = setInterval(() => {
+      /*const i = setInterval(() => {
         console.log('sending yohoho')
         socket.emit('yohoho', { a: 'b' })
-      }, 1000)
+      }, 1000)*/
 
       socket.on('disconnect', () => {
-        console.log('io disconnected')
-        clearTimeout(i)
+        console.log('io disconnected: ' + socket.id)
+        // clearTimeout(i)
       })
 
       socket.on('hejj', () => {

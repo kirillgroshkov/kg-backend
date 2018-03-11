@@ -1,3 +1,4 @@
+import { api } from '@src/api'
 import { schemaService } from '@src/editor/schema.service'
 import { AppError } from '@src/error/app.error'
 import { firestoreService } from '@src/srv/firestore.service'
@@ -19,15 +20,26 @@ class EditorService {
     return firestoreService.getCollectionData(`${project}_${colName}`)
   }
 
-  async saveData (project: string, colName: string, body: any): Promise<any> {
+  async saveData (project: string, colName: string, body: any): Promise<void> {
     if (!body.id) throw new AppError('id should be defined')
     console.log(`saving ${colName}/${body.id}`)
-    return await firestoreService.saveDoc(`${project}_${colName}`, body)
+    await firestoreService.saveDoc(`${project}_${colName}`, body)
+    this.pushToIO(project, colName) // async
   }
 
-  async deleteData (project: string, colName: string, id: string): Promise<any> {
+  async deleteData (project: string, colName: string, id: string): Promise<void> {
     console.log(`deleting ${colName}/${id}`)
-    return await firestoreService.deleteDoc(`${project}_${colName}`, id)
+    await firestoreService.deleteDoc(`${project}_${colName}`, id)
+    this.pushToIO(project, colName) // async
+  }
+
+  async pushToIO (project: string, colName: string): Promise<void> {
+    const newData = await firestoreService.getCollectionData(`${project}_${colName}`)
+
+    api.io.emit('dataUpdated', {
+      collection: colName,
+      data: newData,
+    })
   }
 }
 
