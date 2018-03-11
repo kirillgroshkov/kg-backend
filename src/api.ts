@@ -5,11 +5,14 @@ import { errorHandlerMiddleware } from '@src/mw/errorHandler.mw'
 import { rootResource } from '@src/root.resource'
 import { slResource } from '@src/sl/sl.resource'
 import { sentryService } from '@src/srv/sentry.service'
-import { Middleware } from 'koa'
+import { Server } from 'http'
+import * as http from 'http'
 import * as Koa from 'koa'
+import { Middleware } from 'koa'
 import * as koaBody from 'koa-body'
 import * as koaJson from 'koa-json'
 import * as koaLogger from 'koa-logger'
+import * as socketIo from 'socket.io'
 const koaCors = require('@koa/cors')
 const koaStatic = require('koa-static')
 
@@ -49,10 +52,35 @@ class Api {
     return app
   }
 
+  private setupSocketIo (server: Server): void {
+    const io = socketIo(server)
+    io.on('connection', socket => {
+      console.log('io connection')
+
+      const i = setInterval(() => {
+        console.log('sending yohoho')
+        socket.emit('yohoho', { a: 'b' })
+      }, 1000)
+
+      socket.on('disconnect', () => {
+        console.log('io disconnected')
+        clearTimeout(i)
+      })
+
+      socket.on('hejj', () => {
+        console.log('hejj!')
+      })
+    })
+  }
+
   @memo()
   async listen (port: number): Promise<void> {
     await new Promise(resolve => {
-      this.app().listen(port, () => {
+      const server = http.createServer(this.app().callback())
+
+      this.setupSocketIo(server)
+
+      server.listen(port, () => {
         this.serverStarted = Date.now()
         resolve()
       })
