@@ -17,9 +17,7 @@ Promise.resolve()
   .then(() => api.listen(env().port))
   .then(() => {
     api.serverStartedMillis = api.serverStarted - bootstrapStarted
-    console.log(
-      `server started in ${api.serverStartedMillis} ms on port ${env().port}`,
-    )
+    console.log(`server started in ${api.serverStartedMillis} ms on port ${env().port}`)
   })
   .catch(err => {
     console.error('Error in startServer', err)

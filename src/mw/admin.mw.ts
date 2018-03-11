@@ -4,10 +4,7 @@ import { staticDir } from '../cnst/paths.cnst'
 import { env } from '../environment/environment'
 import { adminService } from '../srv/admin.service'
 
-export const adminMiddleware = (): Middleware => async (
-  ctx: Context,
-  next: Function,
-) => {
+export const adminMiddleware = (): Middleware => async (ctx: Context, next: Function) => {
   if (env().authEnabled) {
     const auth = await adminService.isAuthenticated(ctx)
     if (!auth) {

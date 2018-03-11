@@ -38,17 +38,9 @@ router.get('/:project/data/:colName', async ctx => {
 })
 
 router.put('/:project/data/:colName', adminMiddleware(), async ctx => {
-  ctx.body = await editorService.saveData(
-    ctx.params.project,
-    ctx.params.colName,
-    ctx.request.body,
-  )
+  ctx.body = await editorService.saveData(ctx.params.project, ctx.params.colName, ctx.request.body)
 })
 
 router.delete('/:project/data/:colName/:id', adminMiddleware(), async ctx => {
-  ctx.body = await editorService.deleteData(
-    ctx.params.project,
-    ctx.params.colName,
-    ctx.params.id,
-  )
+  ctx.body = await editorService.deleteData(ctx.params.project, ctx.params.colName, ctx.params.id)
 })

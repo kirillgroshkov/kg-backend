@@ -17,9 +17,7 @@ export const rootResource = router.routes()
 router.get('/', async ctx => {
   ctx.body = {
     started: `${timeUtil.timeBetween(Date.now(), api.serverStarted)} ago`,
-    startedAtUTC: DateTime.fromMillis(api.serverStarted).toFormat(
-      FORMAT_DATETIME_PRETTY,
-    ),
+    startedAtUTC: DateTime.fromMillis(api.serverStarted).toFormat(FORMAT_DATETIME_PRETTY),
     mem: processUtil.memoryUsage(),
     cpuAvg: processUtil.cpuAvg(),
   }

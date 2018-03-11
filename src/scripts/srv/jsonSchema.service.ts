@@ -13,11 +13,7 @@ const settings: TJS.PartialArgs = {
 const concurrency = 4
 
 class JsonSchemaService {
-  async generate (
-    tsconfigFile: string,
-    outDir: string,
-    types: string[],
-  ): Promise<void> {
+  async generate (tsconfigFile: string, outDir: string, types: string[]): Promise<void> {
     const program = TJS.programFromConfig(tsconfigFile)
     /*
     const g = TJS.buildGenerator(program, settings) as JsonSchemaGenerator;

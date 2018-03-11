@@ -7,9 +7,7 @@ class FirebaseService {
   @memo()
   admin (): typeof FirebaseAdmin {
     log('FirebaseService init...')
-    const serviceAccount = JSON.parse(
-      Buffer.from(secret.SECRET_FIREBASE, 'base64').toString('utf8'),
-    )
+    const serviceAccount = JSON.parse(Buffer.from(secret.SECRET_FIREBASE, 'base64').toString('utf8'))
 
     FirebaseAdmin.initializeApp({
       credential: FirebaseAdmin.credential.cert(serviceAccount),
@@ -18,9 +16,7 @@ class FirebaseService {
     return FirebaseAdmin
   }
 
-  async verifyIdToken (
-    idToken: string,
-  ): Promise<FirebaseAdmin.auth.DecodedIdToken> {
+  async verifyIdToken (idToken: string): Promise<FirebaseAdmin.auth.DecodedIdToken> {
     return await this.admin()
       .auth()
       .verifyIdToken(idToken)

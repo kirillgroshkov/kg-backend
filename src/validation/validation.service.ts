@@ -1,16 +1,8 @@
-import {
-  validateSync,
-  ValidationError,
-  ValidatorOptions,
-} from 'class-validator'
+import { validateSync, ValidationError, ValidatorOptions } from 'class-validator'
 import { AppValidationError } from 'src/error/app.validation.error'
 
 export class ValidationService {
-  validate (
-    obj: any,
-    throwOnError = true,
-    opts?: ValidatorOptions,
-  ): ValidationError[] {
+  validate (obj: any, throwOnError = true, opts?: ValidatorOptions): ValidationError[] {
     if (!obj || typeof obj !== 'object') {
       throw new AppValidationError('Object is undefined or not an object type')
     }
@@ -25,32 +17,19 @@ export class ValidationService {
     return errors
   }
 
-  throwValidationError (
-    errors?: ValidationError[],
-    extraMessage?: string,
-  ): void {
+  throwValidationError (errors?: ValidationError[], extraMessage?: string): void {
     if (errors && errors.length) {
-      throw new AppValidationError(
-        this.getValidationErrorMessage(errors, extraMessage),
-        errors,
-      )
+      throw new AppValidationError(this.getValidationErrorMessage(errors, extraMessage), errors)
     }
   }
 
-  getValidationErrorMessage (
-    errors: ValidationError[],
-    message?: string,
-  ): string {
+  getValidationErrorMessage (errors: ValidationError[], message?: string): string {
     console.log(JSON.stringify(errors, undefined, 2))
     const t = []
     if (message) t.push(message, '')
 
     if (errors && errors.length) {
-      t.push(
-        'Invalid object:',
-        JSON.stringify(errors[0].target, undefined, 2),
-        '',
-      )
+      t.push('Invalid object:', JSON.stringify(errors[0].target, undefined, 2), '')
 
       for (let i = 0; i < errors.length; i++) {
         const e = errors[i]

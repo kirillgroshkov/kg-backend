@@ -60,10 +60,7 @@ function _registerDecorator (name: string, validator: ValidatorFunction) {
   }
 }
 
-export const IsStringNotEmpty = _registerDecorator(
-  'IsStringNotEmpty',
-  isStringNotEmpty,
-)
+export const IsStringNotEmpty = _registerDecorator('IsStringNotEmpty', isStringNotEmpty)
 
 export const ValidateFn = _registerDecorator('ValidateFn', validateFn)
 
@@ -72,10 +69,7 @@ export const IsStr = _registerDecorator('IsStr', isStr)
 export const IsNum = _registerDecorator('IsNum', isNum)
 export const IsInteger = _registerDecorator('IsInteger', isInteger)
 
-export const IsUnixTimestamp = _registerDecorator(
-  'IsUnixTimestamp',
-  isUnixTimestamp,
-)
+export const IsUnixTimestamp = _registerDecorator('IsUnixTimestamp', isUnixTimestamp)
 
 export const IsStringId = _registerDecorator('IsStringId', isStringId)
 
@@ -87,7 +81,4 @@ export const IsCur = _registerDecorator('IsCur', isCur)
 export const IsMoneyCents = _registerDecorator('IsMoneyCents', isMoneyCents)
 export const IsLangCode = _registerDecorator('IsLangCode', isLangCode)
 
-export const IsEmailOrDeleted = _registerDecorator(
-  'IsEmailOrDeleted',
-  isEmailOrDeleted,
-)
+export const IsEmailOrDeleted = _registerDecorator('IsEmailOrDeleted', isEmailOrDeleted)

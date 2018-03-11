@@ -60,23 +60,11 @@ class SchemaValidationService {
     return errors
   }
 
-  throwValidationError (
-    errors: ErrorObject[],
-    type?: string,
-    object?: any,
-    message?: string,
-  ): never {
-    throw new AppValidationError(
-      this.formatErrors(errors, type, object, message),
-    )
+  throwValidationError (errors: ErrorObject[], type?: string, object?: any, message?: string): never {
+    throw new AppValidationError(this.formatErrors(errors, type, object, message))
   }
 
-  formatErrors (
-    errors: ErrorObject[],
-    type?: string,
-    object?: any,
-    message?: string,
-  ): string {
+  formatErrors (errors: ErrorObject[], type?: string, object?: any, message?: string): string {
     const t = ['\n']
     if (message) t.push(message, '')
 

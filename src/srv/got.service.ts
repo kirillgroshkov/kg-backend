@@ -3,11 +3,7 @@ import * as got from 'got'
 import { log } from './log.service'
 
 class GotService {
-  private async got<T> (
-    method: string,
-    url: string,
-    _opt: Partial<GotJSONOptions> = {},
-  ): Promise<T> {
+  private async got<T> (method: string, url: string, _opt: Partial<GotJSONOptions> = {}): Promise<T> {
     log(`>> ${method} ${url}`)
     const opt: GotJSONOptions = {
       method,

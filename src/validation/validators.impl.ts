@@ -33,10 +33,8 @@ export const validateFn = (v: any, fn: (v: any) => string | undefined) => {
 
 export const isStr = (v: any, minLength: number = 1, maxLength?: number) => {
   if (typeof v !== 'string') return 'string expected'
-  if (minLength && v.length < minLength)
-    return `expected length >= ${minLength}`
-  if (maxLength && v.length > maxLength)
-    return `expected length <= ${maxLength}`
+  if (minLength && v.length < minLength) return `expected length >= ${minLength}`
+  if (maxLength && v.length > maxLength) return `expected length <= ${maxLength}`
 }
 
 export const isStringNotEmpty = (v: any) => {
@@ -85,41 +83,29 @@ export const isNum = (v: any, min?: number, max?: number) => {
 
 export const isInteger = (v: any, min?: number, max?: number) => {
   if (!Number.isInteger(v)) return 'integer number expected'
-  if (typeof min !== 'undefined' && v < min)
-    return `expected integer number >= ${min}`
-  if (typeof max !== 'undefined' && v > max)
-    return `expected integer number <= ${max}`
+  if (typeof min !== 'undefined' && v < min) return `expected integer number >= ${min}`
+  if (typeof max !== 'undefined' && v > max) return `expected integer number <= ${max}`
 }
 
 //
 // Date/Time
 //
 
-export const isUnixTimestamp = (
-  v: any,
-  min: string = '1970-01-01',
-  max: string = '2500-01-01',
-) => {
+export const isUnixTimestamp = (v: any, min: string = '1970-01-01', max: string = '2500-01-01') => {
   const err = isNotEmpty(v) || isInteger(v)
   if (err) return `expected unixtime`
 
   if (typeof min !== 'undefined') {
-    const dt =
-      min === 'now' ? DateTime.utc() : DateTime.fromISO(min, { zone: 'utc' })
+    const dt = min === 'now' ? DateTime.utc() : DateTime.fromISO(min, { zone: 'utc' })
     if (v < dt) return `expected unixtime later than ${dt}`
   }
   if (typeof max !== 'undefined') {
-    const dt =
-      max === 'now' ? DateTime.utc() : DateTime.fromISO(max, { zone: 'utc' })
+    const dt = max === 'now' ? DateTime.utc() : DateTime.fromISO(max, { zone: 'utc' })
     if (v > dt) return `expected unixtime earlier than ${dt}`
   }
 }
 
-export const isDateStr = (
-  v: any,
-  min: string = '1800-01-01',
-  max: string = '2500-01-01',
-) => {
+export const isDateStr = (v: any, min: string = '1800-01-01', max: string = '2500-01-01') => {
   const err = isNotEmpty(v) || isStr(v)
   if (err) return 'expected date string (yyyy-m-dd)'
 
@@ -143,10 +129,8 @@ export const isDateStr = (
 //
 
 export const isLength = (v: any, min?: number, max?: number) => {
-  if (typeof min !== 'undefined' && v.length < min)
-    return `expected length >= ${min}`
-  if (typeof max !== 'undefined' && v.length > max)
-    return `expected length <= ${max}`
+  if (typeof min !== 'undefined' && v.length < min) return `expected length >= ${min}`
+  if (typeof max !== 'undefined' && v.length > max) return `expected length <= ${max}`
 }
 
 export const isCountryCode = (v: any) => {

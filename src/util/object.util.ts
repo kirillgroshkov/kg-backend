@@ -27,9 +27,7 @@ export class ObjectUtil {
   }
 
   deepEquals (a: object, b: object): boolean {
-    return (
-      JSON.stringify(this.sortObject(a)) === JSON.stringify(this.sortObject(b))
-    )
+    return JSON.stringify(this.sortObject(a)) === JSON.stringify(this.sortObject(b))
   }
 
   /**
@@ -40,9 +38,7 @@ export class ObjectUtil {
   }
 
   isObject (item: any): boolean {
-    return (
-      item && typeof item === 'object' && !Array.isArray(item) && item !== null
-    )
+    return item && typeof item === 'object' && !Array.isArray(item) && item !== null
   }
 
   isEmpty (obj: any): boolean {
