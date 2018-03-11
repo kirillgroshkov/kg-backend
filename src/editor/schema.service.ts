@@ -34,6 +34,8 @@ export interface Field {
 
   minLength?: number
   maxLength?: number
+  regex?: string
+  regexDescr?: string
 
   objectOf?: string
   arrayOf?: string

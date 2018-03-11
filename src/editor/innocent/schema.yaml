@@ -91,6 +91,8 @@ types:
       - name: res
         label: Resolution
         required: true
+        regex: ^\d+x\d+$
+        regexDescr: Should be like 1024x768
       - name: alt
         label: Description
 
