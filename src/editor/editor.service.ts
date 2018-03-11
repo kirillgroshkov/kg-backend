@@ -23,22 +23,24 @@ class EditorService {
   async saveData (project: string, colName: string, body: any): Promise<void> {
     if (!body.id) throw new AppError('id should be defined')
     console.log(`saving ${colName}/${body.id}`)
+    this.pushToIO(project, colName, body.id, body)
     await firestoreService.saveDoc(`${project}_${colName}`, body)
-    this.pushToIO(project, colName) // async
   }
 
   async deleteData (project: string, colName: string, id: string): Promise<void> {
     console.log(`deleting ${colName}/${id}`)
+    this.pushToIO(project, colName, id, undefined)
     await firestoreService.deleteDoc(`${project}_${colName}`, id)
-    this.pushToIO(project, colName) // async
   }
 
-  async pushToIO (project: string, colName: string): Promise<void> {
-    const newData = await firestoreService.getCollectionData(`${project}_${colName}`)
+  pushToIO (project: string, colName: string, id: string, value: any): void {
+    // const newData = await firestoreService.getCollectionData(`${project}_${colName}`)
 
     api.io.emit('dataUpdated', {
       collection: colName,
-      data: newData,
+      // data: newData,
+      id,
+      value,
     })
   }
 }
