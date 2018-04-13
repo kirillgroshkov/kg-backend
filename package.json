@@ -62,8 +62,8 @@
     "jest-fetch-mock": "^1.4.1",
     "jest-junit": "^3.5.0",
     "ts-jest": "^22.0.3",
-    "typescript": "~2.7.0",
-    "typescript-json-schema": "^0.21.0"
+    "typescript": "~2.8.0",
+    "typescript-json-schema": "^0.22.0"
   },
   "author": "Kirill Groshkov <1@inventix.ru>",
   "license": "MIT"
