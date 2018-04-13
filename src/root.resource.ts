@@ -18,6 +18,7 @@ router.get('/', async ctx => {
   ctx.body = {
     started: `${timeUtil.timeBetween(Date.now(), api.serverStarted)} ago`,
     startedAtUTC: DateTime.fromMillis(api.serverStarted).toFormat(FORMAT_DATETIME_PRETTY),
+    region: process.env.NOW_REGION,
     mem: processUtil.memoryUsage(),
     cpuAvg: processUtil.cpuAvg(),
   }
