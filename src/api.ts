@@ -2,6 +2,7 @@ import { staticDir } from '@src/cnst/paths.cnst'
 import { memo } from '@src/decorators/memo.decorator'
 import { editorResource } from '@src/editor/editor.resource'
 import { errorHandlerMiddleware } from '@src/mw/errorHandler.mw'
+import { releasesResource } from '@src/releases/releases.resource'
 import { rootResource } from '@src/root.resource'
 import { slResource } from '@src/sl/sl.resource'
 import { sentryService } from '@src/srv/sentry.service'
@@ -31,6 +32,7 @@ const MIDDLEWARES: Middleware[] = [
   rootResource,
   editorResource,
   slResource,
+  releasesResource,
 ]
 
 class Api {

@@ -1,3 +1,7 @@
+import { CacheAdapter } from '@src/srv/cache/cache.service'
+import { FirestoreCacheAdapter } from '@src/srv/cache/firestore.cache.adapter'
+import { MapCacheAdapter } from '@src/srv/cache/map.cache.adapter'
+
 export class EnvironmentProd {
   name = 'prod'
   prod = true
@@ -10,6 +14,8 @@ export class EnvironmentProd {
     | undefined = 'https://4434a43b3ce348fa90230c94f63bf0d5:e816e3e4964e4822a602d95c32599929@sentry.io/286298'
 
   authEnabled = true
+
+  cacheAdapters: CacheAdapter[] = [new MapCacheAdapter(), new FirestoreCacheAdapter('cache')]
 }
 
 export type Environment = EnvironmentProd

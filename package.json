@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "postinstall1": "yarn patch-node-modules",
+    "patch-node-modules": "cpx 'patch/**' node_modules",
     "start": "node -r tsconfig-paths/register dist/startServer.js",
     "build": "rm -rf ./dist && tsc | cpx 'src/**/*.{graphql,graphqls,json,yaml,yml,html}' dist",
     "now-build": "exit 0",

@@ -10,9 +10,9 @@ class SLApiService {
   async getDepartures (siteId: string, timeWindow: number = 30): Promise<any> {
     const url = `http://api.sl.se/api2/realtimedeparturesV4.json`
 
-    const d = await gotService.get<any>(url, {
+    const r = await gotService.get(url, {
       query: {
-        key: secret.SECRET_SL_REALTIME_API_KEY,
+        key: secret('SECRET_SL_REALTIME_API_KEY'),
         siteId,
         timeWindow,
         Bus: false,
@@ -22,8 +22,10 @@ class SLApiService {
       },
     })
 
-    d['fetchedAt'] = timeUtil.nowPretty()
-    return d
+    return {
+      fetchedAt: timeUtil.nowPretty(),
+      ...r,
+    }
   }
 }
 

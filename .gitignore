@@ -22,3 +22,5 @@ UserInterfaceState.xcuserstate
 /dist
 /www
 /secret
+/cache
+/src/scripts/try*

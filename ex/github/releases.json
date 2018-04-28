@@ -1,0 +1,41 @@
+[
+  {
+    "url": "https://api.github.com/repos/pnpm/pnpm/releases/10553676",
+    "assets_url": "https://api.github.com/repos/pnpm/pnpm/releases/10553676/assets",
+    "upload_url": "https://uploads.github.com/repos/pnpm/pnpm/releases/10553676/assets{?name,label}",
+    "html_url": "https://github.com/pnpm/pnpm/releases/tag/v1.40.2",
+    "id": 10553676,
+    "tag_name": "v1.40.2",
+    "target_commitish": "master",
+    "name": "",
+    "draft": false,
+    "author": {
+      "login": "zkochan",
+      "id": 1927579,
+      "avatar_url": "https://avatars0.githubusercontent.com/u/1927579?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/zkochan",
+      "html_url": "https://github.com/zkochan",
+      "followers_url": "https://api.github.com/users/zkochan/followers",
+      "following_url": "https://api.github.com/users/zkochan/following{/other_user}",
+      "gists_url": "https://api.github.com/users/zkochan/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/zkochan/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/zkochan/subscriptions",
+      "organizations_url": "https://api.github.com/users/zkochan/orgs",
+      "repos_url": "https://api.github.com/users/zkochan/repos",
+      "events_url": "https://api.github.com/users/zkochan/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/zkochan/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "prerelease": false,
+    "created_at": "2018-04-15T18:21:53Z",
+    "published_at": "2018-04-15T18:31:35Z",
+    "assets": [
+
+    ],
+    "tarball_url": "https://api.github.com/repos/pnpm/pnpm/tarball/v1.40.2",
+    "zipball_url": "https://api.github.com/repos/pnpm/pnpm/zipball/v1.40.2",
+    "body": "### Bug Fixes\r\n\r\n* doesn't handle dependencies with unspecified version (#1104, @zkochan)\r\n* **dislink:** don't prefer frozen shrinkwrap when unlinking (https://github.com/pnpm/supi/commit/406bd4d54cc653676d0f19f8ca81483088003ce2, @zkochan)"
+  }
+]
