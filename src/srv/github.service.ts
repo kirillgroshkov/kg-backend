@@ -66,7 +66,7 @@ class GithubService {
       etagMap,
     })
     if (r.statusCode === 304) return undefined // unchanged
-    return r.body.map(r => this.mapRelease(r, repoFullName)).filter(r => r.published > since)
+    return r.body.map(r => this.mapRelease(r, repoFullName)).filter(r => r.created > since || r.published > since)
   }
 
   private mapRepo (r: any): Repo {
