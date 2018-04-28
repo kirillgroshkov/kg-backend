@@ -105,6 +105,7 @@ class ReleasesService {
       console.log('starred repos CHANGED')
       // changed!
       cacheService.set(CacheKey.starredRepos, repos) //  async
+      cacheService.set(CacheKey.etagMap, etagMap) // async
       return repos
     } else {
       console.log('starred repos not changed')

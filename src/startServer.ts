@@ -1,13 +1,15 @@
 console.log('startServer...')
 const bootstrapStarted = Date.now()
 
+/* tslint:disable:ordered-imports */
+import 'reflect-metadata'
+import '@src/polyfills'
 import { api } from '@src/api'
 import { env } from '@src/environment/environment'
 import { secretInit } from '@src/environment/secret'
 import { cacheService } from '@src/srv/cache/cache.service'
 import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
-import 'reflect-metadata'
 
 if (!env().dev) {
   console.log(env())
