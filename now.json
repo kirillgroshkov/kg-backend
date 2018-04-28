@@ -8,7 +8,7 @@
     "SECRET_FIREBASE": "@secret_firebase"
   },
   "engines": {
-    "node": "10.0.0"
+    "node": "8.11.1"
   },
   "files": [
     "package.json",

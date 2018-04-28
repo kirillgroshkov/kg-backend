@@ -13,10 +13,6 @@ import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
 import * as nodeSchedule from 'node-schedule'
 
-if (!env().dev) {
-  console.log(env())
-}
-
 Promise.resolve()
   .then(() => setup())
   .then(() => api.listen(env().port))
@@ -31,12 +27,19 @@ Promise.resolve()
 ////
 
 async function setup (): Promise<void> {
+  if (!env().dev) {
+    console.log(env())
+  }
+
   secretInit()
   sentryService.init()
-  if (env().prod) dontsleepService.start()
   cacheService.adapters = env().cacheAdapters
 
-  // schedule jobs
-  // Every hour - run
-  nodeSchedule.scheduleJob('*/10 * * * *', () => releasesService.cronUpdate())
+  if (env().prod) {
+    // Don't sleep :)
+    nodeSchedule.scheduleJob('* * * * *', () => dontsleepService.run())
+
+    // Update github releases
+    nodeSchedule.scheduleJob('*/10 * * * *', () => releasesService.cronUpdate())
+  }
 }

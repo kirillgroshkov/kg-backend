@@ -4,6 +4,7 @@ import { cacheService } from '@src/srv/cache/cache.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import { githubService } from '@src/srv/github.service'
 import { StringMap } from '@src/typings/other'
+import { timeUtil } from '@src/util/time.util'
 import * as P from 'bluebird'
 import { DateTime } from 'luxon'
 
@@ -53,7 +54,7 @@ class ReleasesService {
 
     console.log(
       [
-        'since: ' + DateTime.fromMillis(since * 1000).toISO(),
+        'since: ' + timeUtil.unixtimePretty(since),
         'etagMap items: ' + Object.keys(etagMap).length,
         'starred repos: ' + repos.length,
       ].join('\n'),
@@ -78,7 +79,7 @@ class ReleasesService {
 
     console.log(
       [
-        'lastCheckedReleases: ' + DateTime.fromMillis(lastCheckedReleases * 1000).toISO(),
+        'lastCheckedReleases: ' + timeUtil.unixtimePretty(lastCheckedReleases),
         'saved: ' + saved,
         'etagMap items: ' + Object.keys(etagMap).length,
         'starred repos: ' + repos.length,
@@ -126,7 +127,7 @@ class ReleasesService {
     const q = firestoreService
       .db()
       .collection('releases')
-      .orderBy('created', 'desc')
+      .orderBy('published', 'desc')
       .limit(100)
     const feed = await firestoreService.runQuery(q)
     return feed.map(r => {
