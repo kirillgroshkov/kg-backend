@@ -3,6 +3,7 @@ import { memo } from '@src/decorators/memo.decorator'
 import { cacheService } from '@src/srv/cache/cache.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import { githubService } from '@src/srv/github.service'
+import { slackService } from '@src/srv/slack.service'
 import { StringMap } from '@src/typings/other'
 import { timeUtil } from '@src/util/time.util'
 import * as P from 'bluebird'
@@ -41,6 +42,7 @@ class ReleasesService {
     console.log('ReleasesService cronUpdate')
     const since = _since || (await this.getLastCheckedReleases())
     const started = Date.now()
+    const newReleases: Release[] = []
 
     if (started / 1000 - since < 180)
       return {
@@ -60,33 +62,49 @@ class ReleasesService {
       ].join('\n'),
     )
 
-    let saved = 0
     await P.map(
       repos,
       async repo => {
         const releases = await githubService.getReleases(etagMap, repo.fullName, since)
         if (releases) {
-          await firestoreService.saveBatch('releases', releases)
-          saved += releases.length
+          // await firestoreService.saveBatch('releases', releases)
+          newReleases.push(...releases)
+          console.log(`newReleases: ${newReleases.length}`)
         }
       },
       { concurrency },
     )
 
-    cacheService.set(CacheKey.etagMap, etagMap) // async
+    if (newReleases.length) {
+      // Save to DB
+      await firestoreService.saveBatch('releases', newReleases)
+
+      // Slack notification
+      const t: string[] = []
+      if (newReleases.length > 1) t.push(`${newReleases.length} releases`)
+      t.push(...newReleases.map(r => `${r.repoFullName}@${r.v}`))
+
+      slackService.send(t.join('\n')) // async
+    }
+
     const lastCheckedReleases = Math.round(started / 1000)
+    cacheService.set(CacheKey.etagMap, etagMap) // async
     cacheService.set(CacheKey.lastCheckedReleases, lastCheckedReleases) // async
 
-    console.log(
-      [
-        'lastCheckedReleases: ' + timeUtil.unixtimePretty(lastCheckedReleases),
-        'saved: ' + saved,
-        'etagMap items: ' + Object.keys(etagMap).length,
-        'starred repos: ' + repos.length,
-      ].join('\n'),
-    )
+    const millis = Date.now() - started
+    const logMsg = [
+      `Finished in ${millis} ms`,
+      'lastCheckedReleases: ' + timeUtil.unixtimePretty(lastCheckedReleases),
+      'newReleases: ' + newReleases.length,
+      'etagMap items: ' + Object.keys(etagMap).length,
+      'starred repos: ' + repos.length,
+    ].join('\n')
 
-    return { saved }
+    console.log(logMsg)
+    // debug
+    slackService.send(logMsg) // async
+
+    return newReleases
   }
 
   async getLastCheckedReleases (): Promise<number> {
@@ -130,10 +148,12 @@ class ReleasesService {
       .orderBy('published', 'desc')
       .limit(100)
     const feed = await firestoreService.runQuery(q)
+
     return feed.map(r => {
       return {
         ...r,
-        createdAt: DateTime.fromMillis(r.created * 1000).toISO(),
+        publishedAt: timeUtil.unixtimePretty(r.published),
+        createdAt: timeUtil.unixtimePretty(r.created),
       }
     })
   }

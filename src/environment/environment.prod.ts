@@ -15,6 +15,8 @@ export class EnvironmentProd {
 
   authEnabled = true
 
+  slackWebhookUrl: string | undefined = 'https://hooks.slack.com/services/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'
+
   cacheAdapters: CacheAdapter[] = [new MapCacheAdapter(), new FirestoreCacheAdapter('cache')]
 }
 
