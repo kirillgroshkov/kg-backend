@@ -2,12 +2,12 @@ import { api } from '@src/api'
 import { staticDir } from '@src/cnst/paths.cnst'
 import { env } from '@src/environment/environment'
 import { adminMiddleware } from '@src/mw/admin.mw'
+import { releasesService } from '@src/releases/releases.service'
 import { adminService } from '@src/srv/admin.service'
 import { processUtil } from '@src/util/process.util'
-import { FORMAT_DATETIME_PRETTY, timeUtil } from '@src/util/time.util'
+import { timeUtil } from '@src/util/time.util'
 import * as fs from 'fs-extra'
 import * as KoaRouter from 'koa-router'
-import { DateTime } from 'luxon'
 
 const router = new KoaRouter({
   prefix: '',
@@ -17,10 +17,13 @@ export const rootResource = router.routes()
 router.get('/', async ctx => {
   ctx.body = {
     started: `${timeUtil.timeBetween(Date.now(), api.serverStarted)} ago`,
-    startedAtUTC: DateTime.fromMillis(api.serverStarted).toFormat(FORMAT_DATETIME_PRETTY),
+    startedAtUTC: timeUtil.unixtimePretty(api.serverStarted / 1000),
     region: process.env.NOW_REGION,
     mem: processUtil.memoryUsage(),
     cpuAvg: processUtil.cpuAvg(),
+    data: {
+      lastCheckedReleases: timeUtil.unixtimePretty(await releasesService.getLastCheckedReleases()),
+    },
   }
 })
 

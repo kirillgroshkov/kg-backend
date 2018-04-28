@@ -7,9 +7,11 @@ import '@src/polyfills'
 import { api } from '@src/api'
 import { env } from '@src/environment/environment'
 import { secretInit } from '@src/environment/secret'
+import { releasesService } from '@src/releases/releases.service'
 import { cacheService } from '@src/srv/cache/cache.service'
 import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
+import * as nodeSchedule from 'node-schedule'
 
 if (!env().dev) {
   console.log(env())
@@ -33,4 +35,8 @@ async function setup (): Promise<void> {
   sentryService.init()
   if (env().prod) dontsleepService.start()
   cacheService.adapters = env().cacheAdapters
+
+  // schedule jobs
+  // Every hour - run
+  nodeSchedule.scheduleJob('*/10 * * * *', () => releasesService.cronUpdate())
 }

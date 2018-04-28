@@ -1,4 +1,5 @@
 import { QuerySnapshot } from '@google-cloud/firestore'
+import { memo } from '@src/decorators/memo.decorator'
 import { cacheService } from '@src/srv/cache/cache.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import { githubService } from '@src/srv/github.service'
@@ -36,12 +37,8 @@ const concurrency = 8
 
 class ReleasesService {
   async cronUpdate (_since?: number): Promise<any> {
-    const yesterday = Math.floor(
-      DateTime.local()
-        .minus({ days: 365 })
-        .valueOf() / 1000,
-    )
-    const since = _since || (await cacheService.getOrDefault<number>(CacheKey.lastCheckedReleases, yesterday))
+    console.log('ReleasesService cronUpdate')
+    const since = _since || (await this.getLastCheckedReleases())
     const started = Date.now()
 
     if (started / 1000 - since < 180)
@@ -91,6 +88,15 @@ class ReleasesService {
     return { saved }
   }
 
+  async getLastCheckedReleases (): Promise<number> {
+    const yesterday = Math.floor(
+      DateTime.local()
+        .minus({ days: 7 })
+        .valueOf() / 1000,
+    )
+    return await cacheService.getOrDefault<number>(CacheKey.lastCheckedReleases, yesterday)
+  }
+
   async getCachedStarredRepos (): Promise<Repo[]> {
     return cacheService.getOrDefault(CacheKey.starredRepos, [])
   }
@@ -113,6 +119,9 @@ class ReleasesService {
     }
   }
 
+  @memo({
+    ttl: 15000,
+  })
   async getFeed (): Promise<any> {
     const q = firestoreService
       .db()

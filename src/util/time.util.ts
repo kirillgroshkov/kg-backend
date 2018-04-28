@@ -22,6 +22,10 @@ class TimeUtil {
   nowPretty (): string {
     return DateTime.local().toFormat(FORMAT_DATETIME_PRETTY)
   }
+
+  unixtimePretty (ts: number): string {
+    return DateTime.fromMillis(ts * 1000).toFormat(FORMAT_DATETIME_PRETTY)
+  }
 }
 
 export const timeUtil = new TimeUtil()

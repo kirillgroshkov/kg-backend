@@ -4,8 +4,8 @@ import { gotService } from './got.service'
 class DontsleepService {
   @memo()
   start (): void {
-    setInterval(async () => {
-      await gotService.get(process.env.NOW_URL!).catch(err => {})
+    setInterval(() => {
+      gotService.get(process.env.NOW_URL!).catch(err => {}) // async
     }, 60000)
   }
 }
