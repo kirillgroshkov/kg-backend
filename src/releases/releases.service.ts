@@ -139,7 +139,7 @@ class ReleasesService {
   }
 
   @memo({
-    ttl: 15000,
+    ttl: 60000,
   })
   async getFeed (): Promise<any> {
     const q = firestoreService
@@ -152,8 +152,8 @@ class ReleasesService {
     return feed.map(r => {
       return {
         ...r,
-        publishedAt: timeUtil.unixtimePretty(r.published),
-        createdAt: timeUtil.unixtimePretty(r.created),
+        // publishedAt: timeUtil.unixtimePretty(r.published),
+        // createdAt: timeUtil.unixtimePretty(r.created),
       }
     })
   }
