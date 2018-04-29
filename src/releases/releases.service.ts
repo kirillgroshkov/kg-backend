@@ -5,6 +5,7 @@ import { firestoreService } from '@src/srv/firestore.service'
 import { githubService } from '@src/srv/github.service'
 import { slackService } from '@src/srv/slack.service'
 import { StringMap } from '@src/typings/other'
+import { objectUtil } from '@src/util/object.util'
 import { timeUtil } from '@src/util/time.util'
 import * as P from 'bluebird'
 import { DateTime } from 'luxon'
@@ -33,7 +34,10 @@ export interface Repo {
   descr: string
   homepage: string
   stargazersCount: number
+  avatarUrl: string
 }
+
+export interface RepoMap { [fullName: string]: Repo }
 
 const concurrency = 8
 
@@ -66,7 +70,7 @@ class ReleasesService {
       repos,
       async repo => {
         const releases = await githubService.getReleases(etagMap, repo.fullName, since)
-        if (releases) {
+        if (releases && releases.length) {
           // await firestoreService.saveBatch('releases', releases)
           newReleases.push(...releases)
           console.log(`newReleases: ${newReleases.length}`)
@@ -116,12 +120,19 @@ class ReleasesService {
     return await cacheService.getOrDefault<number>(CacheKey.lastCheckedReleases, yesterday)
   }
 
-  async getCachedStarredRepos (): Promise<Repo[]> {
-    return cacheService.getOrDefault(CacheKey.starredRepos, [])
-  }
-
   async getEtagMap (): Promise<StringMap> {
     return cacheService.getOrDefault<StringMap>(CacheKey.etagMap, {})
+  }
+
+  async getCachedStarredReposMap (): Promise<RepoMap> {
+    const repos = await this.getCachedStarredRepos()
+    const r: RepoMap = {}
+    repos.forEach(repo => (r[repo.fullName] = repo))
+    return r
+  }
+
+  async getCachedStarredRepos (): Promise<Repo[]> {
+    return cacheService.getOrDefault(CacheKey.starredRepos, [])
   }
 
   async getStarredRepos (etagMap: StringMap): Promise<Repo[]> {
@@ -147,11 +158,13 @@ class ReleasesService {
       .collection('releases')
       .orderBy('published', 'desc')
       .limit(100)
-    const feed = await firestoreService.runQuery(q)
+    const feed = await firestoreService.runQuery<Release>(q)
+    const rmap = await this.getCachedStarredReposMap()
 
     return feed.map(r => {
       return {
-        ...r,
+        ...objectUtil.pick(r, FEED_FIELDS),
+        avatarUrl: (rmap[r.repoFullName] || {}).avatarUrl,
         // publishedAt: timeUtil.unixtimePretty(r.published),
         // createdAt: timeUtil.unixtimePretty(r.created),
       }
@@ -160,3 +173,13 @@ class ReleasesService {
 }
 
 export const releasesService = new ReleasesService()
+
+const FEED_FIELDS: string[] = [
+  'repoFullName',
+  'descr',
+  'v',
+  'published',
+  'created',
+  // 'githubId',
+  'avatarUrl',
+]

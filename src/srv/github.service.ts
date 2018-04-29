@@ -78,6 +78,7 @@ class GithubService {
       descr: r.description,
       homepage: r.homepage,
       stargazersCount: r.stargazers_count,
+      avatarUrl: r.owner.avatar_url,
     }
   }
 
