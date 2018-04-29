@@ -23,6 +23,7 @@ export interface Release {
   created: number
   published: number
   v: string // semver
+  tagName: string // can include 'v' or not
   descr: string // markdown
   githubId: number
   // githubUrl: string
@@ -37,7 +38,9 @@ export interface Repo {
   avatarUrl: string
 }
 
-export interface RepoMap { [fullName: string]: Repo }
+export interface RepoMap {
+  [fullName: string]: Repo
+}
 
 const concurrency = 8
 
@@ -71,7 +74,7 @@ class ReleasesService {
       async repo => {
         const releases = await githubService.getReleases(etagMap, repo.fullName, since)
         if (releases && releases.length) {
-          // await firestoreService.saveBatch('releases', releases)
+          await firestoreService.saveBatch('releases', releases)
           newReleases.push(...releases)
           console.log(`newReleases: ${newReleases.length}`)
         }
@@ -81,7 +84,7 @@ class ReleasesService {
 
     if (newReleases.length) {
       // Save to DB
-      await firestoreService.saveBatch('releases', newReleases)
+      // await firestoreService.saveBatch('releases', newReleases)
 
       // Slack notification
       const t: string[] = []
@@ -163,7 +166,8 @@ class ReleasesService {
 
     return feed.map(r => {
       return {
-        ...objectUtil.pick(r, FEED_FIELDS),
+        // ...objectUtil.pick(r, FEED_FIELDS),
+        ...r,
         avatarUrl: (rmap[r.repoFullName] || {}).avatarUrl,
         // publishedAt: timeUtil.unixtimePretty(r.published),
         // createdAt: timeUtil.unixtimePretty(r.created),

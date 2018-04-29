@@ -41,6 +41,7 @@ class FirestoreService {
       .set(doc)
   }
 
+  // todo: max 500
   async saveBatch (colName: string, docs: any[]): Promise<void> {
     if (!docs.length) return
     console.log(`firestoreService.saveBatch ${colName} ${docs.length} items`)
