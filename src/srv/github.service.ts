@@ -145,7 +145,6 @@ class GithubService {
     })
     return {
       ...r.rate,
-      reset: timeUtil.unixtimePretty(r.rate.reset),
     }
   }
 
