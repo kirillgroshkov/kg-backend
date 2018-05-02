@@ -41,8 +41,8 @@ async function setup (): Promise<void> {
     nodeSchedule.scheduleJob('* * * * *', () => dontsleepService.run())
 
     // Update github releases
-    // nodeSchedule.scheduleJob('*/10 * * * *', () => releasesService.cronUpdate())
-    nodeSchedule.scheduleJob('0 * * * *', () => releasesService.cronUpdate())
+    nodeSchedule.scheduleJob('*/10 * * * *', () => releasesService.cronUpdate())
+    // nodeSchedule.scheduleJob('0 * * * *', () => releasesService.cronUpdate())
 
     slackService.send('server started') // async
   }
