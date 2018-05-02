@@ -172,6 +172,7 @@ class GithubService {
 
     return {
       id: [repoOwner, repoName, v].join('_'),
+      name: r.name,
       v,
       tagName: r.tag_name,
       repoFullName,

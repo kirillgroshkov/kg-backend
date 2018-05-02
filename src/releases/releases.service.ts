@@ -26,6 +26,7 @@ export enum ReleaseType {
 export interface Release {
   // `${repoOwner}_${repoName}_${v}`
   id: string
+  name?: string
   repoFullName: string
   created: number
   published: number
@@ -233,6 +234,7 @@ class ReleasesService {
     })
 
     return {
+      lastCheckedReleases: p.lastCheckedReleases,
       rateLimit: p.rateLimit,
       starredRepos: Object.keys(p.rmap).length,
       lastStarred: Object.keys(p.rmap).slice(0, 10),
