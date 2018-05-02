@@ -34,9 +34,12 @@ class SlackService {
 
     this.decorateMsg(body)
 
-    await gotService.post(env().slackWebhookUrl!, {
-      body,
-    })
+    await gotService
+      .post(env().slackWebhookUrl!, {
+        body,
+        noLog: true,
+      })
+      .catch(ignored => {}) // ignore, cause slack is weirdly returning non-json text "ok" response
   }
 
   // mutates

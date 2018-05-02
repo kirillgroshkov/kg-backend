@@ -11,7 +11,7 @@ export class FileCacheAdapter implements CacheAdapter {
 
   async set (key: string, value: any): Promise<void> {
     const file = path.join(this.cacheDirPath, `${key}.json`)
-    const v = value ? JSON.stringify(value) : undefined
+    const v = value ? JSON.stringify(value, undefined, 2) : undefined
     await fs.writeFile(file, v)
   }
 

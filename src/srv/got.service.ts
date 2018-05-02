@@ -7,6 +7,7 @@ export interface GotResponse<T> extends Response<T> {}
 
 export interface GotOptions extends GotJSONOptions {
   etagMap?: StringMap
+  noLog?: boolean
 }
 
 export class GotService {
@@ -28,12 +29,12 @@ export class GotService {
     const etag = (opt.etagMap && opt.etagMap[url]) || undefined
     if (etag) opt.headers!['If-None-Match'] = etag
 
-    log(`>> ${method} ${url} ${etag || ''}`)
+    if (!opt.noLog) log(`>> ${method} ${url} ${etag || ''}`)
 
     const started = Date.now()
     const r = await got(url, opt)
     const etagReturned = r.headers.etag as string
-    log(`<< ${r.statusCode} ${method} ${url} ${etagReturned || ''} in ${Date.now() - started} ms`)
+    if (!opt.noLog) log(`<< ${r.statusCode} ${method} ${url} ${etagReturned || ''} in ${Date.now() - started} ms`)
     if (etagReturned && opt.etagMap) opt.etagMap[url] = etagReturned
     return r
   }

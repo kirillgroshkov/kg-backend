@@ -26,6 +26,10 @@ class TimeUtil {
   unixtimePretty (ts: number): string {
     return DateTime.fromMillis(ts * 1000).toFormat(FORMAT_DATETIME_PRETTY)
   }
+
+  isoPretty (iso: string): string {
+    return DateTime.fromISO(iso).toFormat(FORMAT_DATETIME_PRETTY)
+  }
 }
 
 export const timeUtil = new TimeUtil()

@@ -1,5 +1,6 @@
 import { QuerySnapshot } from '@google-cloud/firestore'
 import { memo } from '@src/decorators/memo.decorator'
+import { Resp } from '@src/releases/resp'
 import { cacheService } from '@src/srv/cache/cache.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import { githubService } from '@src/srv/github.service'
@@ -14,6 +15,12 @@ export enum CacheKey {
   etagMap = 'etagMap',
   starredRepos = 'starredRepos',
   lastCheckedReleases = 'lastCheckedReleases',
+  lastStarredRepo = 'lastStarredRepo',
+}
+
+export enum ReleaseType {
+  RELEASE = 'RELEASE',
+  TAG = 'TAG',
 }
 
 export interface Release {
@@ -25,8 +32,17 @@ export interface Release {
   v: string // semver
   tagName: string // can include 'v' or not
   descr: string // markdown
-  githubId: number
+  // githubId: number
   // githubUrl: string
+  type: ReleaseType
+}
+
+export interface Tag {
+  // `${repoOwner}_${repoName}_${v}`
+  id: string
+  v: string // semver
+  tagName: string // can include 'v' or not
+  commitUrl: string
 }
 
 export interface Repo {
@@ -45,13 +61,29 @@ export interface RepoMap {
 const concurrency = 8
 
 class ReleasesService {
+  async test (): Promise<any> {
+    if (1 === 1) return // disabled
+    const since = Math.floor(
+      DateTime.local()
+        .minus({ days: 7 })
+        .valueOf() / 1000,
+    )
+    const r = await githubService.getReleases(await this.getEtagMap(), 'sindresorhus/p-queue', since)
+    return r
+  }
+
   async cronUpdate (_since?: number): Promise<any> {
     console.log('ReleasesService cronUpdate')
-    const since = _since || (await this.getLastCheckedReleases())
-    const started = Date.now()
-    const newReleases: Release[] = []
 
-    if (started / 1000 - since < 180)
+    /* _since = Math.floor(
+      DateTime.local()
+        .minus({ days: 2 })
+        .valueOf() / 1000)*/
+
+    const since = _since || (await this.getLastCheckedReleases())
+    const resp = Resp.create<Release>()
+
+    if (resp.started / 1000 - since < 180)
       return {
         err: 'cronUpdate was called recently',
       }
@@ -60,6 +92,7 @@ class ReleasesService {
 
     const repos = await this.getStarredRepos(etagMap)
     // const repos = await this.getCachedStarredRepos() // to speedup things
+    let processed = 0
 
     console.log(
       [
@@ -72,16 +105,27 @@ class ReleasesService {
     await P.map(
       repos,
       async repo => {
-        const releases = await githubService.getReleases(etagMap, repo.fullName, since)
-        if (releases && releases.length) {
+        const releasesResp = await githubService.getReleases(etagMap, repo.fullName, since)
+        resp.add(releasesResp)
+        const releases = releasesResp.body
+        if (releases.length) {
+          resp.firestoreWrites += releases.length
           await firestoreService.saveBatch('releases', releases)
-          newReleases.push(...releases)
-          console.log(`newReleases: ${newReleases.length}`)
+          // console.log(`newReleases: ${resp.body.length}`)
+        }
+
+        processed++
+        if (processed % 100 === 0) {
+          console.log(`*** processed: ${processed}`)
+          resp.log()
+          resp.firestoreWrites++
+          cacheService.set(CacheKey.etagMap, etagMap) // async
         }
       },
       { concurrency },
     )
 
+    const newReleases = resp.body
     if (newReleases.length) {
       // Save to DB
       // await firestoreService.saveBatch('releases', newReleases)
@@ -94,33 +138,37 @@ class ReleasesService {
       slackService.send(t.join('\n')) // async
     }
 
-    const lastCheckedReleases = Math.round(started / 1000)
+    const lastCheckedReleases = Math.round(resp.started / 1000)
+    resp.firestoreWrites += 2
     cacheService.set(CacheKey.etagMap, etagMap) // async
     cacheService.set(CacheKey.lastCheckedReleases, lastCheckedReleases) // async
 
-    const millis = Date.now() - started
+    resp.finish()
     const logMsg = [
-      `Finished in ${millis} ms`,
       'lastCheckedReleases: ' + timeUtil.unixtimePretty(lastCheckedReleases),
       'newReleases: ' + newReleases.length,
       'etagMap items: ' + Object.keys(etagMap).length,
       'starred repos: ' + repos.length,
+      ...resp.getLog(),
+      ``,
     ].join('\n')
 
     console.log(logMsg)
+    // const githubRateLimit = await githubService.getRateLimit()
+    // console.log(githubRateLimit)
     // debug
     slackService.send(logMsg) // async
 
-    return newReleases
+    return resp
   }
 
   async getLastCheckedReleases (): Promise<number> {
-    const yesterday = Math.floor(
+    const since = Math.floor(
       DateTime.local()
         .minus({ days: 7 })
         .valueOf() / 1000,
     )
-    return await cacheService.getOrDefault<number>(CacheKey.lastCheckedReleases, yesterday)
+    return await cacheService.getOrDefault<number>(CacheKey.lastCheckedReleases, since)
   }
 
   async getEtagMap (): Promise<StringMap> {
@@ -139,12 +187,17 @@ class ReleasesService {
   }
 
   async getStarredRepos (etagMap: StringMap): Promise<Repo[]> {
-    const repos = await githubService.getStarred(etagMap)
+    const lastStarredRepo = await cacheService.get<string>(CacheKey.lastStarredRepo)
+    const repos = await githubService.getStarred(etagMap, lastStarredRepo)
     if (repos) {
-      console.log('starred repos CHANGED')
-      // changed!
-      cacheService.set(CacheKey.starredRepos, repos) //  async
-      cacheService.set(CacheKey.etagMap, etagMap) // async
+      if (repos.length) {
+        console.log('starred repos CHANGED')
+        cacheService.set(CacheKey.lastStarredRepo, repos[0].fullName)
+        cacheService.set(CacheKey.starredRepos, repos) //  async
+        cacheService.set(CacheKey.etagMap, etagMap) // async
+      } else {
+        console.log('starred repos CHANGED, but returned zero!?')
+      }
       return repos
     } else {
       console.log('starred repos not changed')
@@ -161,18 +214,30 @@ class ReleasesService {
       .collection('releases')
       .orderBy('published', 'desc')
       .limit(100)
-    const feed = await firestoreService.runQuery<Release>(q)
-    const rmap = await this.getCachedStarredReposMap()
 
-    return feed.map(r => {
+    const p = await P.props({
+      feed: firestoreService.runQuery<Release>(q),
+      rmap: this.getCachedStarredReposMap(),
+      rateLimit: githubService.getRateLimit(),
+      lastCheckedReleases: cacheService.get<number>(CacheKey.lastCheckedReleases),
+    })
+
+    const releases = p.feed.map(r => {
       return {
         // ...objectUtil.pick(r, FEED_FIELDS),
         ...r,
-        avatarUrl: (rmap[r.repoFullName] || {}).avatarUrl,
+        avatarUrl: (p.rmap[r.repoFullName] || {}).avatarUrl,
         // publishedAt: timeUtil.unixtimePretty(r.published),
         // createdAt: timeUtil.unixtimePretty(r.created),
       }
     })
+
+    return {
+      rateLimit: p.rateLimit,
+      starredRepos: Object.keys(p.rmap).length,
+      lastStarred: Object.keys(p.rmap).slice(0, 10),
+      releases,
+    }
   }
 }
 

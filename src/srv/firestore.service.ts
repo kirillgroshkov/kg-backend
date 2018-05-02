@@ -2,12 +2,21 @@ import { DocumentSnapshot, Firestore, Query, QueryDocumentSnapshot, QuerySnapsho
 import { memo } from '@src/decorators/memo.decorator'
 import { firebaseService } from '@src/srv/firebase.service'
 import { log } from '@src/srv/log.service'
+import { stringUtil } from '@src/util/string.util'
 
 class FirestoreService {
   @memo()
   db (): FirebaseFirestore.Firestore {
     log('FirestoreService init...')
     return firebaseService.admin().firestore()
+  }
+
+  private escapeDocId (docId: string): string {
+    return stringUtil.replaceAll(docId, '/', 'SLASH')
+  }
+
+  private unescapeDocId (docId: string): string {
+    return stringUtil.replaceAll(docId, 'SLASH', '/')
   }
 
   async getCollectionData<T = any> (colName: string): Promise<T[]> {
@@ -32,25 +41,25 @@ class FirestoreService {
   }
 
   async saveDoc (colName: string, doc: any, docId?: string): Promise<any> {
-    const id = docId || doc.id
-    console.log(`firestoreService.saveDoc ${colName}.${id}`)
+    docId = docId || doc.id
+    console.log(`firestoreService.saveDoc ${colName}.${docId}`)
 
     return this.db()
       .collection(colName)
-      .doc(id)
+      .doc(this.escapeDocId(docId!))
       .set(doc)
   }
 
   // todo: max 500
   async saveBatch (colName: string, docs: any[]): Promise<void> {
     if (!docs.length) return
-    console.log(`firestoreService.saveBatch ${colName} ${docs.length} items`)
+    console.log(`firestoreService.saveBatch ${colName} ${docs.length} items`, docs.map(d => d.id))
 
     const db = this.db()
     const b = db.batch()
 
     docs.forEach(doc => {
-      b.set(db.collection(colName).doc(doc.id), doc)
+      b.set(db.collection(colName).doc(this.escapeDocId(doc.id)), doc)
     })
 
     await b.commit()
@@ -61,21 +70,21 @@ class FirestoreService {
 
     const doc: DocumentSnapshot = await this.db()
       .collection(colName)
-      .doc(docId)
+      .doc(this.escapeDocId(docId))
       .get()
 
     return {
-      id: doc.id,
+      id: docId,
       ...(doc.data() as any),
     }
   }
 
-  async deleteDoc (colName: string, id: string): Promise<any> {
-    console.log(`firestoreService.deleteDoc ${colName}.${id}`)
+  async deleteDoc (colName: string, docId: string): Promise<any> {
+    console.log(`firestoreService.deleteDoc ${colName}.${docId}`)
 
     return this.db()
       .collection(colName)
-      .doc(id)
+      .doc(this.escapeDocId(docId))
       .delete()
   }
 

@@ -1,7 +1,11 @@
 import { secret } from '@src/environment/secret'
-import { Release, Repo } from '@src/releases/releases.service'
+import { Release, ReleaseType, Repo, Tag } from '@src/releases/releases.service'
+import { Resp } from '@src/releases/resp'
+import { firestoreService } from '@src/srv/firestore.service'
 import { gotService } from '@src/srv/got.service'
 import { StringMap } from '@src/typings/other'
+import { timeUtil } from '@src/util/time.util'
+import * as P from 'bluebird'
 import { DateTime } from 'luxon'
 
 /* tslint:disable:variable-name */
@@ -20,7 +24,7 @@ class GithubService {
 
   // undefined means "unchanged" (304)
   // mutates "etagMap" if not "unchanged"
-  async getStarred (etagMap: StringMap): Promise<Repo[] | undefined> {
+  async getStarred (etagMap: StringMap, lastStarredRepo?: string): Promise<Repo[] | undefined> {
     const per_page = 100
     const allResults: Repo[] = []
     let results: Repo[] | undefined
@@ -29,7 +33,8 @@ class GithubService {
     do {
       page++
       results = await this.getStarredPage(etagMap, per_page, page)
-      if (!results) break
+      if (!results) return undefined // not changed
+      if (page === 1 && results.length && results[0].fullName === lastStarredRepo) return undefined // not changed
       // console.log(`page ${page} results: ${results.length}`)
       allResults.push(...results)
     } while (results.length === per_page)
@@ -48,6 +53,7 @@ class GithubService {
       headers: this.headers,
       timeout: 10000,
       etagMap,
+      // noLog: true,
     }
 
     const r = await gotService.gotResponse<any[]>('get', url, opt)
@@ -57,16 +63,90 @@ class GithubService {
 
   // undefined means "unchanged" (304)
   // mutates "etagMap" if not "unchanged"
-  async getReleases (etagMap: StringMap, repoFullName: string, since: number): Promise<Release[] | undefined> {
+  async getReleases (etagMap: StringMap, repoFullName: string, since: number): Promise<Resp<Release>> {
     const per_page = 100
     const page = 1
-    const url = `${API}/repos/${repoFullName}/releases?per_page=${per_page}&page=${page}`
-    const r = await gotService.gotResponse<any[]>('get', url, {
+    const releases: { [v: string]: Release } = {}
+    const resp = Resp.create<Release>()
+
+    // 1. Releases
+    const releasesUrl = `${API}/repos/${repoFullName}/releases?per_page=${per_page}&page=${page}`
+    const releasesResp = await gotService.gotResponse<any[]>('get', releasesUrl, {
+      headers: this.headers,
+      etagMap, // NO: because Tags changed are we need "descr" - we need to load them anyway
+      noLog: true,
+    })
+    if (releasesResp.statusCode === 304) {
+      resp.etagHits++
+    } else {
+      resp.githubRequests++
+
+      releasesResp.body
+        .map(r => this.mapRelease(r, repoFullName))
+        .filter(r => r.created > since || r.published > since)
+        .forEach(r => (releases[r.v] = r))
+    }
+
+    // 2. Tags (that are not "github releases")
+    const tagsUrl = `${API}/repos/${repoFullName}/tags?per_page=${per_page}&page=${page}`
+    const tagsResp = await gotService.gotResponse<any[]>('get', tagsUrl, {
       headers: this.headers,
       etagMap,
+      noLog: true,
     })
-    if (r.statusCode === 304) return undefined // unchanged
-    return r.body.map(r => this.mapRelease(r, repoFullName)).filter(r => r.created > since || r.published > since)
+    if (tagsResp.statusCode === 304) {
+      resp.etagHits++
+    } else {
+      resp.githubRequests++
+
+      const tags = tagsResp.body.map(r => this.mapTag(r, repoFullName))
+
+      // Gather additional information from github commits that correspond to these tags
+      // one by one, so we can "break" the loop when time is < than "since"
+      for await (const t of tags) {
+        if (releases[t.v]) continue // already in "releases"
+        // if (t.v.includes('/')) continue // todo: support in Firestore
+
+        // check if we already have it in DB
+        resp.firestoreReads++
+        if (await firestoreService.getDoc('releases', t.id)) {
+          break // we already have it
+        }
+
+        const res = await gotService.gotResponse('get', t.commitUrl, {
+          headers: this.headers,
+          etagMap,
+          noLog: true,
+        })
+        if (res.statusCode === 304) {
+          resp.etagHits++
+          break // 304, so we already have it
+        }
+
+        resp.githubRequests++
+
+        const r = this.mapTagAsRelease(t, res.body, repoFullName)
+        if (r.created <= since) break // we already have it
+        releases[r.v] = r
+      }
+    }
+
+    // Exclude versions with slash '/' (cause cannot save to Firestore document like this)
+    // todo: on firestore level: escape as / => _SLASH_ => /
+    Object.assign(resp, {
+      body: Object.values(releases), // .filter(r => !r.v.includes('/')),
+    })
+    return resp
+  }
+
+  async getRateLimit (): Promise<any> {
+    const r = await gotService.get(`${API}/rate_limit`, {
+      headers: this.headers,
+    })
+    return {
+      ...r.rate,
+      reset: timeUtil.unixtimePretty(r.rate.reset),
+    }
   }
 
   private mapRepo (r: any): Repo {
@@ -98,7 +178,37 @@ class GithubService {
       created,
       published,
       descr: r.body,
-      githubId: r.id,
+      type: ReleaseType.RELEASE,
+    }
+  }
+
+  private mapTag (r: any, repoFullName: string): Tag {
+    let v = r.name as string
+    if (v.startsWith('v')) v = v.substr(1)
+
+    const [repoOwner, repoName] = repoFullName.split('/')
+
+    return {
+      id: [repoOwner, repoName, v].join('_'),
+      v,
+      tagName: r.name,
+      commitUrl: r.commit.url,
+    }
+  }
+
+  private mapTagAsRelease (t: Tag, commit: any, repoFullName: string): Release {
+    const created = Math.floor(DateTime.fromISO(commit.commit.author.date).valueOf() / 1000)
+    const published = Math.floor(DateTime.fromISO(commit.commit.author.date).valueOf() / 1000)
+
+    return {
+      id: t.id,
+      v: t.v,
+      tagName: t.tagName,
+      repoFullName,
+      created,
+      published,
+      descr: '',
+      type: ReleaseType.TAG,
     }
   }
 }
