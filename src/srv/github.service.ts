@@ -211,7 +211,7 @@ class GithubService {
       repoFullName,
       created,
       published,
-      descr: '',
+      descr: commit.commit.message || '',
       type: ReleaseType.TAG,
     }
   }

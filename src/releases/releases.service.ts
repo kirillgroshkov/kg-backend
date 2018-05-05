@@ -74,7 +74,8 @@ class ReleasesService {
     return r
   }
 
-  async cronUpdate (_since?: number): Promise<any> {
+  async cronUpdate (_since?: number, noLog = true): Promise<any> {
+    // noLog = false
     /*_since = Math.floor(
       DateTime.local()
         .minus({ months: 5 })
@@ -107,7 +108,7 @@ class ReleasesService {
     await P.map(
       repos,
       async repo => {
-        const releasesResp = await githubService.getReleases(etagMap, repo.fullName, since)
+        const releasesResp = await githubService.getReleases(etagMap, repo.fullName, since, noLog)
         resp.add(releasesResp)
         const releases = releasesResp.body
         if (releases.length) {
