@@ -2,13 +2,15 @@ import { QuerySnapshot } from '@google-cloud/firestore'
 import { memo } from '@src/decorators/memo.decorator'
 import { Resp } from '@src/releases/resp'
 import { cacheService } from '@src/srv/cache/cache.service'
+import { firebaseService } from '@src/srv/firebase.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import { githubService } from '@src/srv/github.service'
 import { slackService } from '@src/srv/slack.service'
 import { StringMap } from '@src/typings/other'
-import { objectUtil } from '@src/util/object.util'
+import { jsonify, objectUtil } from '@src/util/object.util'
 import { timeUtil } from '@src/util/time.util'
 import * as P from 'bluebird'
+import { IRouterContext } from 'koa-router'
 import { DateTime } from 'luxon'
 
 export enum CacheKey {
@@ -58,6 +60,18 @@ export interface Repo {
 
 export interface RepoMap {
   [fullName: string]: Repo
+}
+
+export interface AuthInput {
+  username: string
+  accessToken: string
+  idToken: string
+}
+
+export interface UserInfo {
+  id: string
+  username: string
+  accessToken: string
 }
 
 const concurrency = 8
@@ -194,6 +208,19 @@ class ReleasesService {
     return cacheService.getOrDefault(CacheKey.starredRepos, [])
   }
 
+  async getUserInfo (uid: string): Promise<UserInfo> {
+    return cacheService.get(`user_${uid}`)
+  }
+
+  async getUserInfoFromContext (ctx: IRouterContext): Promise<UserInfo> {
+    const idToken = ctx.get('idToken')
+    if (!idToken) return Promise.reject(new Error('idToken required'))
+    const d = await firebaseService.verifyIdToken(idToken)
+    const u = await this.getUserInfo(d.uid)
+    console.log(`${u.id} ${u.username}`)
+    return u
+  }
+
   async getStarredRepos (etagMap: StringMap): Promise<Repo[]> {
     const lastStarredRepo = await cacheService.get<string>(CacheKey.lastStarredRepo)
     const repos = await githubService.getStarred(etagMap, lastStarredRepo)
@@ -216,7 +243,9 @@ class ReleasesService {
   @memo({
     ttl: 60000,
   })
-  async getFeed (limit = 100): Promise<any> {
+  async getFeed (ctx: IRouterContext, limit = 100): Promise<any> {
+    const userInfo = await this.getUserInfoFromContext(ctx)
+
     const q = firestoreService
       .db()
       .collection('releases')
@@ -275,9 +304,11 @@ class ReleasesService {
     // const etagMap = await this.getEtagMap()
     const etagMap: StringMap = {}
 
-    const since = _since || timeUtil.toUnixtime(DateTime.local().minus({ months: 4 }))
+    const since = _since || timeUtil.toUnixtime(DateTime.local().minus({ years: 2 }))
+    console.log(`fetchReleasesByRepo ${repoFullName} since ${timeUtil.unixtimePretty(since)}`)
 
     const releasesResp = await githubService.getReleases(etagMap, repoFullName, since, false)
+    console.log(releasesResp)
     const releases = releasesResp.body
     if (releases.length) {
       await firestoreService.saveBatch('releases', releases)
@@ -288,6 +319,20 @@ class ReleasesService {
 
   async getReleaseById (id: string): Promise<Release> {
     return (await firestoreService.getDoc('releases', id)) || 'not found'
+  }
+
+  async auth (input: AuthInput): Promise<any> {
+    const d = await firebaseService.verifyIdToken(input.idToken)
+    const uid = d.uid
+    // console.log('d', JSON.stringify(d, null, 2))
+
+    cacheService.set(`user_${uid}`, {
+      id: uid,
+      username: input.username,
+      accessToken: input.accessToken,
+    } as UserInfo)
+
+    return {}
   }
 }
 

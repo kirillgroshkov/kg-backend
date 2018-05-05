@@ -16,7 +16,7 @@ router.get('/test', async ctx => {
 })
 
 router.get('/', async ctx => {
-  ctx.body = await releasesService.getFeed(ctx.query.limit)
+  ctx.body = await releasesService.getFeed(ctx, ctx.query.limit)
 })
 
 router.get('/repos', async ctx => {
@@ -37,4 +37,8 @@ router.get('/releases/:id', async ctx => {
 
 router.get('/info', async ctx => {
   ctx.body = await githubService.getRateLimit()
+})
+
+router.post('/auth', async ctx => {
+  ctx.body = await releasesService.auth(ctx.request.body)
 })
