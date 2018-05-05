@@ -6,7 +6,6 @@ import { gotService } from '@src/srv/got.service'
 import { StringMap } from '@src/typings/other'
 import { timeUtil } from '@src/util/time.util'
 import * as P from 'bluebird'
-import { DateTime } from 'luxon'
 
 /* tslint:disable:variable-name */
 
@@ -50,7 +49,10 @@ class GithubService {
 
     const url = `${API}/users/${username}/starred?per_page=${per_page}&page=${page}`
     const opt = {
-      headers: this.headers,
+      headers: {
+        ...this.headers,
+        Accept: 'application/vnd.github.v3.star+json', // will include "star creation timestamps" starred_at
+      },
       timeout: 10000,
       etagMap,
       // noLog: true,
@@ -63,7 +65,7 @@ class GithubService {
 
   // undefined means "unchanged" (304)
   // mutates "etagMap" if not "unchanged"
-  async getReleases (etagMap: StringMap, repoFullName: string, since: number): Promise<Resp<Release>> {
+  async getReleases (etagMap: StringMap, repoFullName: string, since: number, noLog = true): Promise<Resp<Release>> {
     const per_page = 100
     const page = 1
     const releases: { [v: string]: Release } = {}
@@ -74,7 +76,7 @@ class GithubService {
     const releasesResp = await gotService.gotResponse<any[]>('get', releasesUrl, {
       headers: this.headers,
       etagMap, // NO: because Tags changed are we need "descr" - we need to load them anyway
-      noLog: true,
+      noLog,
     })
     if (releasesResp.statusCode === 304) {
       resp.etagHits++
@@ -92,7 +94,7 @@ class GithubService {
     const tagsResp = await gotService.gotResponse<any[]>('get', tagsUrl, {
       headers: this.headers,
       etagMap,
-      noLog: true,
+      noLog,
     })
     if (tagsResp.statusCode === 304) {
       resp.etagHits++
@@ -116,7 +118,7 @@ class GithubService {
         const res = await gotService.gotResponse('get', t.commitUrl, {
           headers: this.headers,
           etagMap,
-          noLog: true,
+          noLog,
         })
         if (res.statusCode === 304) {
           resp.etagHits++
@@ -149,15 +151,17 @@ class GithubService {
   }
 
   private mapRepo (r: any): Repo {
+    // console.log('mapRepo', r, r.repo.full_name)
     return {
-      githubId: r.id,
-      fullName: r.full_name,
-      // owner: r.owner.login,
-      // name: r.name,
-      descr: r.description,
-      homepage: r.homepage,
-      stargazersCount: r.stargazers_count,
-      avatarUrl: r.owner.avatar_url,
+      githubId: r.repo.id,
+      fullName: r.repo.full_name,
+      // owner: r.repo.owner.login,
+      // name: r.repo.name,
+      descr: r.repo.description,
+      homepage: r.repo.homepage,
+      stargazersCount: r.repo.stargazers_count,
+      avatarUrl: r.repo.owner.avatar_url,
+      starredAt: timeUtil.isoToUnixtime(r.starred_at),
     }
   }
 
@@ -166,8 +170,8 @@ class GithubService {
     if (v.startsWith('v')) v = v.substr(1)
 
     const [repoOwner, repoName] = repoFullName.split('/')
-    const created = Math.floor(DateTime.fromISO(r.created_at).valueOf() / 1000)
-    const published = Math.floor(DateTime.fromISO(r.published_at).valueOf() / 1000)
+    const created = timeUtil.isoToUnixtime(r.created_at)
+    const published = timeUtil.isoToUnixtime(r.published_at)
 
     return {
       id: [repoOwner, repoName, v].join('_'),
@@ -197,8 +201,8 @@ class GithubService {
   }
 
   private mapTagAsRelease (t: Tag, commit: any, repoFullName: string): Release {
-    const created = Math.floor(DateTime.fromISO(commit.commit.author.date).valueOf() / 1000)
-    const published = Math.floor(DateTime.fromISO(commit.commit.author.date).valueOf() / 1000)
+    const created = timeUtil.isoToUnixtime(commit.commit.committer.date)
+    const published = timeUtil.isoToUnixtime(commit.commit.committer.date)
 
     return {
       id: t.id,

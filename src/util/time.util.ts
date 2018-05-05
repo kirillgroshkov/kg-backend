@@ -30,6 +30,14 @@ class TimeUtil {
   isoPretty (iso: string): string {
     return DateTime.fromISO(iso).toFormat(FORMAT_DATETIME_PRETTY)
   }
+
+  isoToUnixtime (iso: string): number {
+    return Math.floor(DateTime.fromISO(iso).valueOf() / 1000)
+  }
+
+  toUnixtime (dt: DateTime): number {
+    return Math.floor(dt.valueOf() / 1000)
+  }
 }
 
 export const timeUtil = new TimeUtil()

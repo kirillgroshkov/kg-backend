@@ -16,7 +16,23 @@ router.get('/test', async ctx => {
 })
 
 router.get('/', async ctx => {
-  ctx.body = await releasesService.getFeed()
+  ctx.body = await releasesService.getFeed(ctx.query.limit)
+})
+
+router.get('/repos', async ctx => {
+  ctx.body = await releasesService.getRepos()
+})
+
+router.get('/repos/:owner/:name/releases', async ctx => {
+  ctx.body = await releasesService.getReleasesByRepo(ctx.params.owner, ctx.params.name, ctx.query.limit)
+})
+
+router.get('/repos/:owner/:name/releases/fetch', async ctx => {
+  ctx.body = await releasesService.fetchReleasesByRepo(ctx.params.owner, ctx.params.name, ctx.query.since)
+})
+
+router.get('/releases/:id', async ctx => {
+  ctx.body = await releasesService.getReleaseById(ctx.params.id)
 })
 
 router.get('/info', async ctx => {

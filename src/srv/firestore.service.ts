@@ -50,9 +50,16 @@ class FirestoreService {
       .set(doc)
   }
 
-  // todo: max 500
-  async saveBatch (colName: string, docs: any[]): Promise<void> {
+  async saveBatch (colName: string, _docs: any[]): Promise<void> {
+    const docs = [..._docs]
     if (!docs.length) return
+
+    // Firestore allows to save up to 500 docs in 1 batch
+    while (docs.length > 500) {
+      const subDocs = docs.splice(0, 500)
+      await this.saveBatch(colName, subDocs)
+    }
+
     console.log(`firestoreService.saveBatch ${colName} ${docs.length} items`, docs.map(d => d.id))
 
     const db = this.db()
@@ -73,9 +80,12 @@ class FirestoreService {
       .doc(this.escapeDocId(docId))
       .get()
 
+    const data = doc.data()
+    if (data === undefined) return undefined
+
     return {
       id: docId,
-      ...(doc.data() as any),
+      ...(data as any),
     }
   }
 

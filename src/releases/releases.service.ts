@@ -53,6 +53,7 @@ export interface Repo {
   homepage: string
   stargazersCount: number
   avatarUrl: string
+  starredAt: number
 }
 
 export interface RepoMap {
@@ -74,14 +75,13 @@ class ReleasesService {
   }
 
   async cronUpdate (_since?: number): Promise<any> {
-    console.log('ReleasesService cronUpdate')
-
-    /* _since = Math.floor(
+    /*_since = Math.floor(
       DateTime.local()
-        .minus({ days: 2 })
+        .minus({ months: 5 })
         .valueOf() / 1000)*/
 
     const since = _since || (await this.getLastCheckedReleases())
+    console.log('ReleasesService cronUpdate since: ' + timeUtil.unixtimePretty(since))
     const resp = Resp.create<Release>()
 
     if (resp.started / 1000 - since < 180)
@@ -94,6 +94,7 @@ class ReleasesService {
     const repos = await this.getStarredRepos(etagMap)
     // const repos = await this.getCachedStarredRepos() // to speedup things
     let processed = 0
+    let etagsSaved = 0
 
     console.log(
       [
@@ -115,12 +116,17 @@ class ReleasesService {
           // console.log(`newReleases: ${resp.body.length}`)
         }
 
+        // Save etags after each 100 cache misses
+        if (resp.githubRequests > etagsSaved + 100) {
+          etagsSaved = resp.githubRequests
+          resp.firestoreWrites++
+          cacheService.set(CacheKey.etagMap, etagMap) // async
+        }
+
         processed++
         if (processed % 100 === 0) {
           console.log(`*** processed: ${processed}`)
           resp.log()
-          resp.firestoreWrites++
-          cacheService.set(CacheKey.etagMap, etagMap) // async
         }
       },
       { concurrency },
@@ -209,12 +215,12 @@ class ReleasesService {
   @memo({
     ttl: 60000,
   })
-  async getFeed (): Promise<any> {
+  async getFeed (limit = 100): Promise<any> {
     const q = firestoreService
       .db()
       .collection('releases')
       .orderBy('published', 'desc')
-      .limit(100)
+      .limit(limit)
 
     const p = await P.props({
       feed: firestoreService.runQuery<Release>(q),
@@ -240,6 +246,47 @@ class ReleasesService {
       lastStarred: Object.keys(p.rmap).slice(0, 10),
       releases,
     }
+  }
+
+  /*@memo({
+    ttl: 60000,
+  })*/
+  async getRepos (): Promise<Repo[]> {
+    const repos = await this.getCachedStarredRepos()
+    return repos
+  }
+
+  async getReleasesByRepo (owner: string, name: string, limit = 100): Promise<Release[]> {
+    const repoFullName = [owner, name].join('/')
+
+    const q = firestoreService
+      .db()
+      .collection('releases')
+      .where('repoFullName', '==', repoFullName)
+      .orderBy('published', 'desc')
+      .limit(limit)
+
+    return firestoreService.runQuery<Release>(q)
+  }
+
+  async fetchReleasesByRepo (owner: string, name: string, _since?: number): Promise<Release[]> {
+    const repoFullName = [owner, name].join('/')
+    // const etagMap = await this.getEtagMap()
+    const etagMap: StringMap = {}
+
+    const since = _since || timeUtil.toUnixtime(DateTime.local().minus({ months: 4 }))
+
+    const releasesResp = await githubService.getReleases(etagMap, repoFullName, since, false)
+    const releases = releasesResp.body
+    if (releases.length) {
+      await firestoreService.saveBatch('releases', releases)
+    }
+
+    return releases
+  }
+
+  async getReleaseById (id: string): Promise<Release> {
+    return (await firestoreService.getDoc('releases', id)) || 'not found'
   }
 }
 
