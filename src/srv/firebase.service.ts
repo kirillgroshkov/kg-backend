@@ -17,7 +17,7 @@ class FirebaseService {
   }
 
   async verifyIdToken (idToken: string): Promise<FirebaseAdmin.auth.DecodedIdToken> {
-    return await this.admin()
+    return this.admin()
       .auth()
       .verifyIdToken(idToken)
   }

@@ -160,3 +160,9 @@ export class ObjectUtil {
 }
 
 export const objectUtil = new ObjectUtil()
+
+// experiment
+export function jsonify<T> (o: T): T {
+  if (!o) return o
+  return JSON.parse(JSON.stringify(o))
+}
