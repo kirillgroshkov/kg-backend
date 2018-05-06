@@ -213,10 +213,15 @@ class ReleasesService {
   }
 
   async getUserInfoFromContext (ctx: IRouterContext): Promise<UserInfo> {
+    // Skip tight security for now, use just 'uid' header from ctx
+    /*
     const idToken = ctx.get('idToken')
     if (!idToken) return Promise.reject(new Error('idToken required'))
     const d = await firebaseService.verifyIdToken(idToken)
-    const u = await this.getUserInfo(d.uid)
+    const u = await this.getUserInfo(d.uid)*/
+    const uid = ctx.get('uid')
+    if (!uid) return Promise.reject(new Error('uid required'))
+    const u = await this.getUserInfo(uid)
     console.log(`${u.id} ${u.username}`)
     return u
   }
