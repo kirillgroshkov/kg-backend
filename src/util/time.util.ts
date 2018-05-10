@@ -31,6 +31,10 @@ class TimeUtil {
     return DateTime.fromISO(iso).toFormat(FORMAT_DATETIME_PRETTY)
   }
 
+  nowUnixtime (): number {
+    return Math.floor(Date.now() / 1000)
+  }
+
   isoToUnixtime (iso: string): number {
     return Math.floor(DateTime.fromISO(iso).valueOf() / 1000)
   }

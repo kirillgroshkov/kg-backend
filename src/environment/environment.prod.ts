@@ -1,6 +1,6 @@
-import { CacheAdapter } from '@src/srv/cache/cache.service'
-import { FirestoreCacheAdapter } from '@src/srv/cache/firestore.cache.adapter'
-import { MapCacheAdapter } from '@src/srv/cache/map.cache.adapter'
+import { CacheDBAdapter } from '@src/srv/cachedb/cachedb'
+import { FirestoreCacheDBAdapter } from '@src/srv/cachedb/firestore.cachedb.adapter'
+import { MapCacheDBAdapter } from '@src/srv/cachedb/map.cachedb.adapter'
 
 export class EnvironmentProd {
   name = 'prod'
@@ -17,7 +17,8 @@ export class EnvironmentProd {
 
   slackWebhookUrl: string | undefined = 'https://hooks.slack.com/services/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'
 
-  cacheAdapters: CacheAdapter[] = [new MapCacheAdapter(), new FirestoreCacheAdapter('cache')]
+  cacheDBAdapters: CacheDBAdapter[] = [new MapCacheDBAdapter(), new FirestoreCacheDBAdapter()]
+  cacheDBDefaultTtl: number | undefined = undefined
 }
 
 export type Environment = EnvironmentProd

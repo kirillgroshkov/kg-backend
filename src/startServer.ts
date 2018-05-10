@@ -8,7 +8,7 @@ import { api } from '@src/api'
 import { env } from '@src/environment/environment'
 import { secretInit } from '@src/environment/secret'
 import { releasesService } from '@src/releases/releases.service'
-import { cacheService } from '@src/srv/cache/cache.service'
+import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
 import { slackService } from '@src/srv/slack.service'
@@ -34,7 +34,9 @@ async function setup (): Promise<void> {
 
   secretInit()
   sentryService.init()
-  cacheService.adapters = env().cacheAdapters
+
+  cacheDB.adapters = env().cacheDBAdapters
+  cacheDB.defaultTtl = env().cacheDBDefaultTtl
 
   if (env().prod) {
     // Don't sleep :)

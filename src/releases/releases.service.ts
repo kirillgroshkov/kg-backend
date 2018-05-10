@@ -1,7 +1,8 @@
 import { QuerySnapshot } from '@google-cloud/firestore'
+import { cacheDir } from '@src/cnst/paths.cnst'
 import { memo } from '@src/decorators/memo.decorator'
 import { Resp } from '@src/releases/resp'
-import { cacheService } from '@src/srv/cache/cache.service'
+import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { firebaseService } from '@src/srv/firebase.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import { githubService } from '@src/srv/github.service'
@@ -135,7 +136,7 @@ class ReleasesService {
         if (resp.githubRequests > etagsSaved + 100) {
           etagsSaved = resp.githubRequests
           resp.firestoreWrites++
-          cacheService.set(CacheKey.etagMap, etagMap) // async
+          cacheDB.set(CacheKey.etagMap, etagMap) // async
         }
 
         processed++
@@ -162,8 +163,8 @@ class ReleasesService {
 
     const lastCheckedReleases = Math.round(resp.started / 1000)
     resp.firestoreWrites += 2
-    cacheService.set(CacheKey.etagMap, etagMap) // async
-    cacheService.set(CacheKey.lastCheckedReleases, lastCheckedReleases) // async
+    cacheDB.set(CacheKey.etagMap, etagMap) // async
+    cacheDB.set(CacheKey.lastCheckedReleases, lastCheckedReleases) // async
 
     resp.finish()
     const logMsg = [
@@ -190,11 +191,11 @@ class ReleasesService {
         .minus({ days: 7 })
         .valueOf() / 1000,
     )
-    return await cacheService.getOrDefault<number>(CacheKey.lastCheckedReleases, since)
+    return await cacheDB.getOrDefault<number>(CacheKey.lastCheckedReleases, since)
   }
 
   async getEtagMap (): Promise<StringMap> {
-    return cacheService.getOrDefault<StringMap>(CacheKey.etagMap, {})
+    return cacheDB.getOrDefault<StringMap>(CacheKey.etagMap, {})
   }
 
   async getCachedStarredReposMap (): Promise<RepoMap> {
@@ -205,11 +206,11 @@ class ReleasesService {
   }
 
   async getCachedStarredRepos (): Promise<Repo[]> {
-    return cacheService.getOrDefault(CacheKey.starredRepos, [])
+    return cacheDB.getOrDefault(CacheKey.starredRepos, [])
   }
 
   async getUserInfo (uid: string): Promise<UserInfo> {
-    return cacheService.get(`user_${uid}`)
+    return cacheDB.get(`user_${uid}`)
   }
 
   async getUserInfoFromContext (ctx: IRouterContext): Promise<UserInfo> {
@@ -227,14 +228,14 @@ class ReleasesService {
   }
 
   async getStarredRepos (etagMap: StringMap): Promise<Repo[]> {
-    const lastStarredRepo = await cacheService.get<string>(CacheKey.lastStarredRepo)
+    const lastStarredRepo = await cacheDB.get<string>(CacheKey.lastStarredRepo)
     const repos = await githubService.getStarred(etagMap, lastStarredRepo)
     if (repos) {
       if (repos.length) {
         console.log('starred repos CHANGED')
-        cacheService.set(CacheKey.lastStarredRepo, repos[0].fullName)
-        cacheService.set(CacheKey.starredRepos, repos) //  async
-        cacheService.set(CacheKey.etagMap, etagMap) // async
+        cacheDB.set(CacheKey.lastStarredRepo, repos[0].fullName)
+        cacheDB.set(CacheKey.starredRepos, repos) //  async
+        cacheDB.set(CacheKey.etagMap, etagMap) // async
       } else {
         console.log('starred repos CHANGED, but returned zero!?')
       }
@@ -261,7 +262,7 @@ class ReleasesService {
       feed: firestoreService.runQuery<Release>(q),
       rmap: this.getCachedStarredReposMap(),
       rateLimit: githubService.getRateLimit(),
-      lastCheckedReleases: cacheService.get<number>(CacheKey.lastCheckedReleases),
+      lastCheckedReleases: cacheDB.get<number>(CacheKey.lastCheckedReleases),
     })
 
     const releases = p.feed.map(r => {
@@ -331,7 +332,7 @@ class ReleasesService {
     const uid = d.uid
     // console.log('d', JSON.stringify(d, null, 2))
 
-    cacheService.set(`user_${uid}`, {
+    cacheDB.set(`user_${uid}`, {
       id: uid,
       username: input.username,
       accessToken: input.accessToken,
