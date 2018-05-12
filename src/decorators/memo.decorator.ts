@@ -5,15 +5,16 @@
 /* tslint:disable:no-invalid-this */
 import * as LRU from 'lru-cache'
 
-type Resolver = (...args: any[]) => any
+type Resolver = (...args: any[]) => string
 
 interface MemoOpts {
   cacheKeyFn?: Resolver
   ttl?: number
   maxSize?: number
+  log?: boolean
 }
 
-function jsonCacheKey (args: any[]): string {
+const jsonCacheKey: Resolver = (...args: any[]): string => {
   return JSON.stringify(args)
 }
 
@@ -38,12 +39,14 @@ export const memo = (opts: MemoOpts = {}) => (
 
   // descriptor.value = memoize(descriptor.value, opts.resolver)
   descriptor.value = function (...args: any[]): any {
-    const cacheKey = opts.cacheKeyFn!(args)
+    const cacheKey = opts.cacheKeyFn!(...args)
 
     if (cache.has(cacheKey)) {
       const cached = cache.get(cacheKey)
-      // console.log('returning value from cache: ', cacheKey, key)
+      if (opts.log) console.log(`@memo HIT ${key} "${cacheKey}"`)
       return cached
+    } else {
+      if (opts.log) console.log(`@memo MISS ${key} "${cacheKey}"`)
     }
 
     const res: any = originalFn.apply(this, args)

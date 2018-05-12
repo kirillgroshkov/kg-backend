@@ -2,7 +2,7 @@ import { api } from '@src/api'
 import { staticDir } from '@src/cnst/paths.cnst'
 import { env } from '@src/environment/environment'
 import { adminMiddleware } from '@src/mw/admin.mw'
-import { releasesService } from '@src/releases/releases.service'
+import { releasesDao } from '@src/releases/releases.dao'
 import { adminService } from '@src/srv/admin.service'
 import { processUtil } from '@src/util/process.util'
 import { timeUtil } from '@src/util/time.util'
@@ -22,7 +22,7 @@ router.get('/', async ctx => {
     mem: processUtil.memoryUsage(),
     cpuAvg: processUtil.cpuAvg(),
     data: {
-      lastCheckedReleases: timeUtil.unixtimePretty(await releasesService.getLastCheckedReleases()),
+      lastCheckedReleases: timeUtil.unixtimePretty(await releasesDao.getLastCheckedReleases()),
     },
   }
 })

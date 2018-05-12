@@ -42,6 +42,18 @@ class TimeUtil {
   toUnixtime (dt: DateTime): number {
     return Math.floor(dt.valueOf() / 1000)
   }
+
+  startOfDay (): DateTime {
+    return DateTime.utc().startOf('day')
+  }
+
+  startOfDayUnixtime (): number {
+    return Math.floor(
+      DateTime.utc()
+        .startOf('day')
+        .valueOf() / 1000,
+    )
+  }
 }
 
 export const timeUtil = new TimeUtil()

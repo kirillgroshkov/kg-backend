@@ -1,5 +1,6 @@
+import { githubService } from '@src/releases/github.service'
+import { releasesDao } from '@src/releases/releases.dao'
 import { releasesService } from '@src/releases/releases.service'
-import { githubService } from '@src/srv/github.service'
 import * as KoaRouter from 'koa-router'
 
 const router = new KoaRouter({
@@ -12,15 +13,18 @@ router.get('/cronUpdate', async ctx => {
 })
 
 router.get('/test', async ctx => {
-  ctx.body = await releasesService.test()
+  ctx.body = await releasesService.test(ctx)
 })
 
 router.get('/', async ctx => {
-  ctx.body = await releasesService.getFeed(ctx, ctx.query.limit)
+  // const uid = releasesDao.requireUid(ctx)
+  const u = await releasesDao.getUserFromContext(ctx)
+  ctx.body = await releasesService.getFeed(u, ctx.query.minIncl, ctx.query.maxExcl)
 })
 
 router.get('/repos', async ctx => {
-  ctx.body = await releasesService.getRepos()
+  const u = await releasesDao.getUserFromContext(ctx)
+  ctx.body = await releasesService.getRepos(u)
 })
 
 router.get('/repos/:owner/:name/releases', async ctx => {
@@ -28,7 +32,8 @@ router.get('/repos/:owner/:name/releases', async ctx => {
 })
 
 router.get('/repos/:owner/:name/releases/fetch', async ctx => {
-  ctx.body = await releasesService.fetchReleasesByRepo(ctx.params.owner, ctx.params.name, ctx.query.since)
+  const u = await releasesDao.getUserFromContext(ctx)
+  ctx.body = await releasesService.fetchReleasesByRepo(u, ctx.params.owner, ctx.params.name, ctx.query.since)
 })
 
 router.get('/releases/:id', async ctx => {
@@ -36,7 +41,8 @@ router.get('/releases/:id', async ctx => {
 })
 
 router.get('/info', async ctx => {
-  ctx.body = await githubService.getRateLimit()
+  const user = await releasesDao.getUserFromContext(ctx)
+  ctx.body = await githubService.getRateLimit(user)
 })
 
 router.post('/auth', async ctx => {

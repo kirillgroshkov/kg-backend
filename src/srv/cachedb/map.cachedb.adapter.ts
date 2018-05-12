@@ -35,8 +35,24 @@ export class MapCacheDBAdapter implements CacheDBAdapter {
     this.map.clear()
   }
 
-  async keys (table?: string): Promise<string[]> {
-    return [...this.getTable(table).keys()]
+  async keys (table = this.defaultTable): Promise<string[] | undefined> {
+    const map = this.map.get(table)
+    if (!map) return undefined
+    return [...map.keys()]
+  }
+
+  async values<T = any> (table = this.defaultTable): Promise<T[] | undefined> {
+    const map = this.map.get(table)
+    if (!map) return undefined
+    return [...map.values()]
+  }
+
+  async entries<T> (table: string): Promise<{ [k: string]: T } | undefined> {
+    const r: { [k: string]: T } = {}
+    const map = this.map.get(table)
+    if (!map) return undefined
+    map.forEach((v, k) => (r[k] = v))
+    return r
   }
 
   async tables (): Promise<string[]> {

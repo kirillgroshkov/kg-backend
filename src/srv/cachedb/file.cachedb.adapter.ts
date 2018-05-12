@@ -1,6 +1,10 @@
 import { CacheDBAdapter } from '@src/srv/cachedb/cachedb'
+import * as P from 'bluebird'
 import * as fs from 'fs-extra'
 import * as path from 'path'
+
+const EXT = '.json'
+const EXT_LEN = EXT.length
 
 export class FileCacheDBAdapter implements CacheDBAdapter {
   constructor (private cacheDirPath: string, public defaultTable = 'cacheDB') {
@@ -17,7 +21,7 @@ export class FileCacheDBAdapter implements CacheDBAdapter {
   }
 
   private async getFilePath (table = this.defaultTable, key: string): Promise<string> {
-    return path.join(await this.getTable(table), `${key}.json`)
+    return path.join(await this.getTable(table), `${key}${EXT}`)
   }
 
   async set (key: string, value: any, table?: string): Promise<void> {
@@ -38,7 +42,8 @@ export class FileCacheDBAdapter implements CacheDBAdapter {
   }
 
   async clear (table?: string): Promise<void> {
-    // todo
+    const tablePath = await this.getTable(table)
+    await fs.unlink(tablePath)
   }
 
   async clearAll (): Promise<void> {
@@ -46,13 +51,33 @@ export class FileCacheDBAdapter implements CacheDBAdapter {
     await fs.ensureDir(this.cacheDirPath)
   }
 
-  async keys (table?: string): Promise<string[]> {
-    // todo
-    return []
+  async keys (table = this.defaultTable): Promise<string[] | undefined> {
+    const tablePath = path.join(this.cacheDirPath, table)
+    if (!(await fs.pathExists(tablePath))) return undefined
+    const files = await fs.readdir(tablePath)
+    return files.map(f => f.substr(0, f.length - EXT_LEN))
+  }
+
+  async entries<T = any> (table: string): Promise<{ [k: string]: T } | undefined> {
+    const keys = await this.keys(table)
+    if (!keys) return undefined
+
+    const r: { [k: string]: T } = {}
+    await P.map(keys, async k => {
+      const filePath = path.join(this.cacheDirPath, table, k + EXT)
+      const v = await fs.readFile(filePath, 'utf8')
+      r[k] = v ? JSON.parse(v) : undefined
+    })
+    return r
+  }
+
+  async values<T = any> (table = this.defaultTable): Promise<T[] | undefined> {
+    const entries = await this.entries(table)
+    if (!entries) return undefined
+    return Object.values(entries)
   }
 
   async tables (): Promise<string[]> {
-    // todo
-    return []
+    return fs.readdir(this.cacheDirPath)
   }
 }

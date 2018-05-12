@@ -27,13 +27,25 @@ export class FirestoreCacheDBAdapter implements CacheDBAdapter {
     // todo
   }
 
-  async keys (table = this.defaultTable): Promise<string[]> {
-    // todo
-    return []
+  async keys (table = this.defaultTable): Promise<string[] | undefined> {
+    const values = await firestoreService.getCollectionData(table)
+    return values.map(v => (v as any).id)
+  }
+
+  async values<T = any> (table: string): Promise<T[] | undefined> {
+    return firestoreService.getCollectionData(table)
   }
 
   async tables (): Promise<string[]> {
     // todo
     return []
+  }
+
+  // Assumes that every Doc has 'id' property
+  async entries<T = any> (table: string): Promise<{ [k: string]: T } | undefined> {
+    const r: { [k: string]: T } = {}
+    const values = await firestoreService.getCollectionData<T>(table)
+    values.forEach(v => (r[(v as any).id] = v))
+    return r
   }
 }

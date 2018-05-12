@@ -1,67 +1,18 @@
 import { QuerySnapshot } from '@google-cloud/firestore'
-import { cacheDir } from '@src/cnst/paths.cnst'
 import { memo } from '@src/decorators/memo.decorator'
+import { githubService } from '@src/releases/github.service'
+import { CacheKey, Release, releasesDao, Repo, User } from '@src/releases/releases.dao'
 import { Resp } from '@src/releases/resp'
 import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { firebaseService } from '@src/srv/firebase.service'
 import { firestoreService } from '@src/srv/firestore.service'
-import { githubService } from '@src/srv/github.service'
 import { slackService } from '@src/srv/slack.service'
 import { StringMap } from '@src/typings/other'
-import { jsonify, objectUtil } from '@src/util/object.util'
-import { timeUtil } from '@src/util/time.util'
+import { by } from '@src/util/object.util'
+import { LUXON_ISO_DATE_FORMAT, timeUtil } from '@src/util/time.util'
 import * as P from 'bluebird'
 import { IRouterContext } from 'koa-router'
 import { DateTime } from 'luxon'
-
-export enum CacheKey {
-  etagMap = 'etagMap',
-  starredRepos = 'starredRepos',
-  lastCheckedReleases = 'lastCheckedReleases',
-  lastStarredRepo = 'lastStarredRepo',
-}
-
-export enum ReleaseType {
-  RELEASE = 'RELEASE',
-  TAG = 'TAG',
-}
-
-export interface Release {
-  // `${repoOwner}_${repoName}_${v}`
-  id: string
-  name?: string
-  repoFullName: string
-  created: number
-  published: number
-  v: string // semver
-  tagName: string // can include 'v' or not
-  descr: string // markdown
-  // githubId: number
-  // githubUrl: string
-  type: ReleaseType
-}
-
-export interface Tag {
-  // `${repoOwner}_${repoName}_${v}`
-  id: string
-  v: string // semver
-  tagName: string // can include 'v' or not
-  commitUrl: string
-}
-
-export interface Repo {
-  githubId: number
-  fullName: string
-  descr: string
-  homepage: string
-  stargazersCount: number
-  avatarUrl: string
-  starredAt: number
-}
-
-export interface RepoMap {
-  [fullName: string]: Repo
-}
 
 export interface AuthInput {
   username: string
@@ -69,34 +20,59 @@ export interface AuthInput {
   idToken: string
 }
 
-export interface UserInfo {
-  id: string
-  username: string
-  accessToken: string
+export interface AuthResp {
+  newUser: boolean
 }
 
 const concurrency = 8
 
 class ReleasesService {
-  async test (): Promise<any> {
+  async test (ctx: IRouterContext): Promise<any> {
     if (1 === 1) return // disabled
     const since = Math.floor(
       DateTime.local()
         .minus({ days: 7 })
         .valueOf() / 1000,
     )
-    const r = await githubService.getReleases(await this.getEtagMap(), 'sindresorhus/p-queue', since)
+    const user = await releasesDao.getUserFromContext(ctx)
+    const r = await githubService.getRepoReleases(
+      await releasesDao.getEtagMap(),
+      user,
+      'sindresorhus/p-queue',
+      since,
+      false,
+    )
     return r
   }
 
+  private async getUserStarredRepos (u: User, etagMap: StringMap): Promise<Repo[]> {
+    const repos = await githubService.getUserStarredRepos(u, etagMap)
+    if (repos) {
+      if (repos.length) {
+        console.log(`${u.username} starred repos CHANGED`)
+        u.lastStarredRepo = repos[0].fullName
+        u.starredRepos = repos
+        releasesDao.saveUser(u) // async
+        releasesDao.saveEtagMap(etagMap) // async
+      } else {
+        console.log(`${u.username} starred repos CHANGED, but returned zero!?`)
+      }
+      return repos
+    } else {
+      console.log(`${u.username} starred repos not changed`)
+      return u.starredRepos || []
+    }
+  }
+
+  // For all users
   async cronUpdate (_since?: number, noLog = true): Promise<any> {
-    // noLog = false
-    /*_since = Math.floor(
+    /* noLog = false
+    _since = Math.floor(
       DateTime.local()
         .minus({ months: 5 })
-        .valueOf() / 1000)*/
+        .valueOf() / 1000) */
 
-    const since = _since || (await this.getLastCheckedReleases())
+    const since = _since || (await releasesDao.getLastCheckedReleases())
     console.log('ReleasesService cronUpdate since: ' + timeUtil.unixtimePretty(since))
     const resp = Resp.create<Release>()
 
@@ -105,10 +81,20 @@ class ReleasesService {
         err: 'cronUpdate was called recently',
       }
 
-    const etagMap = await this.getEtagMap()
+    const userIdForRepo: { [repoFullName: string]: string } = {}
 
-    const repos = await this.getStarredRepos(etagMap)
-    // const repos = await this.getCachedStarredRepos() // to speedup things
+    const etagMap = await releasesDao.getEtagMap()
+    const usersEntries = await releasesDao.getUsersEntries()
+    const users = Object.values(usersEntries)
+    const repos: Repo[] = []
+
+    // async iteration
+    for await (const u of users) {
+      const userRepos = await this.getUserStarredRepos(u, etagMap)
+      userRepos.forEach(repo => (userIdForRepo[repo.fullName] = u.id))
+      repos.push(...userRepos)
+    }
+
     let processed = 0
     let etagsSaved = 0
 
@@ -123,7 +109,9 @@ class ReleasesService {
     await P.map(
       repos,
       async repo => {
-        const releasesResp = await githubService.getReleases(etagMap, repo.fullName, since, noLog)
+        const uid = userIdForRepo[repo.fullName]
+        const u = usersEntries[uid]
+        const releasesResp = await githubService.getRepoReleases(etagMap, u, repo.fullName, since, noLog)
         resp.add(releasesResp)
         const releases = releasesResp.body
         if (releases.length) {
@@ -136,7 +124,7 @@ class ReleasesService {
         if (resp.githubRequests > etagsSaved + 100) {
           etagsSaved = resp.githubRequests
           resp.firestoreWrites++
-          cacheDB.set(CacheKey.etagMap, etagMap) // async
+          releasesDao.saveEtagMap(etagMap) // async
         }
 
         processed++
@@ -155,7 +143,7 @@ class ReleasesService {
 
       // Slack notification
       const t: string[] = []
-      if (newReleases.length > 1) t.push(`${newReleases.length} releases`)
+      t.push(`${newReleases.length} new releases:`)
       t.push(...newReleases.map(r => `${r.repoFullName}@${r.v}`))
 
       slackService.send(t.join('\n')) // async
@@ -163,8 +151,8 @@ class ReleasesService {
 
     const lastCheckedReleases = Math.round(resp.started / 1000)
     resp.firestoreWrites += 2
-    cacheDB.set(CacheKey.etagMap, etagMap) // async
-    cacheDB.set(CacheKey.lastCheckedReleases, lastCheckedReleases) // async
+    releasesDao.saveEtagMap(etagMap) // async
+    releasesDao.saveLastCheckedReleases(lastCheckedReleases) // async
 
     resp.finish()
     const logMsg = [
@@ -185,91 +173,47 @@ class ReleasesService {
     return resp
   }
 
-  async getLastCheckedReleases (): Promise<number> {
-    const since = Math.floor(
-      DateTime.local()
-        .minus({ days: 7 })
-        .valueOf() / 1000,
-    )
-    return await cacheDB.getOrDefault<number>(CacheKey.lastCheckedReleases, since)
-  }
-
-  async getEtagMap (): Promise<StringMap> {
-    return cacheDB.getOrDefault<StringMap>(CacheKey.etagMap, {})
-  }
-
-  async getCachedStarredReposMap (): Promise<RepoMap> {
-    const repos = await this.getCachedStarredRepos()
-    const r: RepoMap = {}
-    repos.forEach(repo => (r[repo.fullName] = repo))
-    return r
-  }
-
-  async getCachedStarredRepos (): Promise<Repo[]> {
-    return cacheDB.getOrDefault(CacheKey.starredRepos, [])
-  }
-
-  async getUserInfo (uid: string): Promise<UserInfo> {
-    return cacheDB.get(`user_${uid}`)
-  }
-
-  async getUserInfoFromContext (ctx: IRouterContext): Promise<UserInfo> {
-    // Skip tight security for now, use just 'uid' header from ctx
-    /*
-    const idToken = ctx.get('idToken')
-    if (!idToken) return Promise.reject(new Error('idToken required'))
-    const d = await firebaseService.verifyIdToken(idToken)
-    const u = await this.getUserInfo(d.uid)*/
-    const uid = ctx.get('uid')
-    if (!uid) return Promise.reject(new Error('uid required'))
-    const u = await this.getUserInfo(uid)
-    console.log(`${u.id} ${u.username}`)
-    return u
-  }
-
-  async getStarredRepos (etagMap: StringMap): Promise<Repo[]> {
-    const lastStarredRepo = await cacheDB.get<string>(CacheKey.lastStarredRepo)
-    const repos = await githubService.getStarred(etagMap, lastStarredRepo)
-    if (repos) {
-      if (repos.length) {
-        console.log('starred repos CHANGED')
-        cacheDB.set(CacheKey.lastStarredRepo, repos[0].fullName)
-        cacheDB.set(CacheKey.starredRepos, repos) //  async
-        cacheDB.set(CacheKey.etagMap, etagMap) // async
-      } else {
-        console.log('starred repos CHANGED, but returned zero!?')
-      }
-      return repos
-    } else {
-      console.log('starred repos not changed')
-      return this.getCachedStarredRepos()
-    }
-  }
-
   @memo({
     ttl: 60000,
+    log: true,
+    cacheKeyFn: (u, _minIncl, _maxExcl) => [u.id, _minIncl, _maxExcl].join(),
   })
-  async getFeed (ctx: IRouterContext, limit = 100): Promise<any> {
-    const userInfo = await this.getUserInfoFromContext(ctx)
+  async getFeed (u: User, _minIncl: string, _maxExcl: string): Promise<any> {
+    // defaults
+    const minIncl =
+      _minIncl ||
+      DateTime.utc()
+        .startOf('day')
+        .toFormat(LUXON_ISO_DATE_FORMAT)
+    const maxExcl =
+      _maxExcl ||
+      DateTime.utc()
+        .startOf('day')
+        .plus({ days: 1 })
+        .toFormat(LUXON_ISO_DATE_FORMAT)
+    console.log(`getFeed [${minIncl}; ${maxExcl})`)
 
     const q = firestoreService
       .db()
       .collection('releases')
+      .where('published', '>=', timeUtil.isoToUnixtime(minIncl))
+      .where('published', '<', timeUtil.isoToUnixtime(maxExcl))
       .orderBy('published', 'desc')
-      .limit(limit)
 
     const p = await P.props({
       feed: firestoreService.runQuery<Release>(q),
-      rmap: this.getCachedStarredReposMap(),
-      rateLimit: githubService.getRateLimit(),
+      // rmap: this.getCachedStarredReposMap(),
+      rateLimit: githubService.getRateLimit(u),
       lastCheckedReleases: cacheDB.get<number>(CacheKey.lastCheckedReleases),
     })
+
+    const rmap = by(u.starredRepos, 'fullName')
 
     const releases = p.feed.map(r => {
       return {
         // ...objectUtil.pick(r, FEED_FIELDS),
         ...r,
-        avatarUrl: (p.rmap[r.repoFullName] || {}).avatarUrl,
+        avatarUrl: (rmap[r.repoFullName] || {}).avatarUrl,
         // publishedAt: timeUtil.unixtimePretty(r.published),
         // createdAt: timeUtil.unixtimePretty(r.created),
       }
@@ -278,18 +222,19 @@ class ReleasesService {
     return {
       lastCheckedReleases: p.lastCheckedReleases,
       rateLimit: p.rateLimit,
-      starredRepos: Object.keys(p.rmap).length,
-      lastStarred: Object.keys(p.rmap).slice(0, 10),
+      starredRepos: Object.keys(rmap).length,
+      lastStarred: Object.keys(rmap).slice(0, 10),
       releases,
     }
   }
 
-  /*@memo({
+  @memo({
     ttl: 60000,
-  })*/
-  async getRepos (): Promise<Repo[]> {
-    const repos = await this.getCachedStarredRepos()
-    return repos
+    log: true,
+    cacheKeyFn: u => u.id,
+  })
+  async getRepos (u: User): Promise<Repo[]> {
+    return u.starredRepos
   }
 
   async getReleasesByRepo (owner: string, name: string, limit = 100): Promise<Release[]> {
@@ -305,7 +250,7 @@ class ReleasesService {
     return firestoreService.runQuery<Release>(q)
   }
 
-  async fetchReleasesByRepo (owner: string, name: string, _since?: number): Promise<Release[]> {
+  async fetchReleasesByRepo (u: User, owner: string, name: string, _since?: number): Promise<Release[]> {
     const repoFullName = [owner, name].join('/')
     // const etagMap = await this.getEtagMap()
     const etagMap: StringMap = {}
@@ -313,7 +258,7 @@ class ReleasesService {
     const since = _since || timeUtil.toUnixtime(DateTime.local().minus({ years: 2 }))
     console.log(`fetchReleasesByRepo ${repoFullName} since ${timeUtil.unixtimePretty(since)}`)
 
-    const releasesResp = await githubService.getReleases(etagMap, repoFullName, since, false)
+    const releasesResp = await githubService.getRepoReleases(etagMap, u, repoFullName, since, false)
     console.log(releasesResp)
     const releases = releasesResp.body
     if (releases.length) {
@@ -332,13 +277,26 @@ class ReleasesService {
     const uid = d.uid
     // console.log('d', JSON.stringify(d, null, 2))
 
-    cacheDB.set(`user_${uid}`, {
+    const existingUser = await releasesDao.getUser(uid)
+    const newUser = !existingUser
+
+    const u = {
+      ...existingUser, // to preserve "starredRepos"
       id: uid,
       username: input.username,
       accessToken: input.accessToken,
-    } as UserInfo)
+      // starredRepos: [], // will be fetched later
+    }
+    releasesDao.saveUser(u) // async
 
-    return {}
+    if (newUser) {
+      slackService.send(`New user! ${u.username} ${u.id}`) // async
+      // todo: start cron job for this one user
+    }
+
+    const r: AuthResp = { newUser }
+
+    return r
   }
 }
 

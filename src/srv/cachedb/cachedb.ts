@@ -9,8 +9,14 @@ export interface CacheDBAdapter {
   delete (key: string, table?: string): Promise<void>
   clear (table?: string): Promise<void>
   clearAll (): Promise<void>
-  keys (table?: string): Promise<string[]>
+  keys (table?: string): Promise<string[] | undefined> // undefined === cache miss
+  values<T> (table?: string): Promise<T[] | undefined> // undefined === cache miss
+  entries<T> (table?: string): Promise<{ [k: string]: T } | undefined> // undefined === cache miss
   tables (): Promise<string[]>
+}
+
+export interface WrappedValue<T> {
+  _value: T
 }
 
 class CacheDB implements CacheDBAdapter {
@@ -19,13 +25,9 @@ class CacheDB implements CacheDBAdapter {
   defaultTtl?: number = undefined
 
   async set (key: string, _value: any, table?: string): Promise<void> {
-    if (!objectUtil.isObject(_value)) {
-      return Promise.reject(new Error('CacheDB: only object values are supported'))
-    }
-
     const updated = timeUtil.nowUnixtime()
     const value = {
-      ..._value,
+      ...(objectUtil.isObject(_value) ? _value : { _value }), // wrap if non-object
       // id: key, // do we need it?
       updated,
     }
@@ -42,9 +44,9 @@ class CacheDB implements CacheDBAdapter {
   // if (expired) => treat as "cache miss" and go deeper (also, delete expired key)
   async get<T = any> (key: string, table?: string, ttl = this.defaultTtl): Promise<T | undefined> {
     // try to get one-by-one, return first who got result !== undefined
-    // look mom - async iteration!
     const now = timeUtil.nowUnixtime()
     let level = 0
+    // look mom - async iteration!
     for await (const a of this.adapters) {
       level++
 
@@ -63,17 +65,64 @@ class CacheDB implements CacheDBAdapter {
         continue
       }
 
-      console.log(`cache returned (${key}) from level ${level} (${a.name})`)
+      console.log(`cache returned (${table || ''}.${key}) from level ${level} (${a.name})`)
       if (level > 1) {
         // need to populate to lower-level caches (which are actually "higher-level" :)
+        const updated = timeUtil.nowUnixtime()
+        const value = {
+          ...r,
+          updated,
+        }
         for (let i = 1; i < level; i++) {
-          this.adapters[i - 1].set(key, r, table) // async
+          this.adapters[i - 1].set(key, value, table) // async
         }
       }
-      return r as T
+
+      // unwrap "_value" if needed
+      return r._value || r
     }
 
-    console.log(`cache not found (${key})`)
+    console.log(`cache not found (${table || ''}.${key})`)
+  }
+
+  // todo: DRY
+  async entries<T = any> (table: string, ttl = this.defaultTtl): Promise<{ [k: string]: T }> {
+    // try to get one-by-one, return first who got result !== undefined
+    // const now = timeUtil.nowUnixtime()
+    let level = 0
+    // look mom - async iteration!
+    for await (const a of this.adapters) {
+      level++
+
+      // if ttl=0 - invalidate cache and skip to the deepest level directly
+      if (ttl === 0 && level < this.adapters.length) continue
+
+      // console.log(`trying level ${level}`)
+      const r = await a.entries<T>(table)
+      if (r === undefined) continue // miss
+
+      // ttl is not supported yet, except ttl=0 (above)
+
+      console.log(`cache returned (${table || ''}.entries) from level ${level} (${a.name})`)
+      if (level > 1) {
+        // need to populate to lower-level caches (which are actually "higher-level" :)
+        const updated = timeUtil.nowUnixtime()
+        for (let i = 1; i < level; i++) {
+          // Set "entries" as all objects, one by one, async
+          Object.keys(r).forEach(k => {
+            const value = {
+              ...(r[k] as any),
+              updated,
+            }
+            this.adapters[i - 1].set(k, value, table) // async
+          })
+        }
+      }
+      return r
+    }
+
+    console.log(`cache not found (${table || ''}.entries())`)
+    return {}
   }
 
   async getOrDefault<T = any> (key: string, defaultValue: T, table?: string, ttl = this.defaultTtl): Promise<T> {
@@ -101,8 +150,19 @@ class CacheDB implements CacheDBAdapter {
   }
 
   async keys (table?: string): Promise<string[]> {
-    // get from the first adapter
-    return this.adapters[0].keys(table)
+    for await (const a of this.adapters) {
+      const keys = await a.keys(table)
+      if (keys) return keys
+    }
+    return []
+  }
+
+  async values<T = any> (table?: string): Promise<T[]> {
+    for await (const a of this.adapters) {
+      const values = await a.values<T>(table)
+      if (values) return values
+    }
+    return []
   }
 
   async tables (): Promise<string[]> {

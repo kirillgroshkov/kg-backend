@@ -1,29 +1,27 @@
-import { secret } from '@src/environment/secret'
-import { Release, ReleaseType, Repo, Tag } from '@src/releases/releases.service'
+import { Release, ReleaseType, Repo, Tag, User } from '@src/releases/releases.dao'
 import { Resp } from '@src/releases/resp'
-import { firestoreService } from '@src/srv/firestore.service'
 import { gotService } from '@src/srv/got.service'
-import { StringMap } from '@src/typings/other'
-import { timeUtil } from '@src/util/time.util'
 import * as P from 'bluebird'
+import { firestoreService } from '../srv/firestore.service'
+import { StringMap } from '../typings/other'
+import { timeUtil } from '../util/time.util'
 
 /* tslint:disable:variable-name */
 
 const API = 'https://api.github.com'
-const username = 'kirillgroshkov'
 
 class GithubService {
-  get headers (): StringMap {
+  headers (u: User): StringMap {
     return {
       Accept: 'application/vnd.github.v3+json',
-      'User-Agent': username,
-      Authorization: `token ${secret('SECRET_GITHUB_TOKEN')}`,
+      'User-Agent': u.username,
+      Authorization: `token ${u.accessToken}`,
     }
   }
 
   // undefined means "unchanged" (304)
   // mutates "etagMap" if not "unchanged"
-  async getStarred (etagMap: StringMap, lastStarredRepo?: string): Promise<Repo[] | undefined> {
+  async getUserStarredRepos (u: User, etagMap: StringMap): Promise<Repo[] | undefined> {
     const per_page = 100
     const allResults: Repo[] = []
     let results: Repo[] | undefined
@@ -31,9 +29,9 @@ class GithubService {
 
     do {
       page++
-      results = await this.getStarredPage(etagMap, per_page, page)
+      results = await this.getUserStarredReposPage(etagMap, u, per_page, page)
       if (!results) return undefined // not changed
-      if (page === 1 && results.length && results[0].fullName === lastStarredRepo) return undefined // not changed
+      if (page === 1 && results.length && results[0].fullName === u.lastStarredRepo) return undefined // not changed
       // console.log(`page ${page} results: ${results.length}`)
       allResults.push(...results)
     } while (results.length === per_page)
@@ -44,13 +42,18 @@ class GithubService {
 
   // undefined means "unchanged" (304)
   // mutates "etagMap" if not "unchanged"
-  private async getStarredPage (etagMap: StringMap, per_page = 100, page = 0): Promise<Repo[] | undefined> {
+  private async getUserStarredReposPage (
+    etagMap: StringMap,
+    u: User,
+    per_page = 100,
+    page = 0,
+  ): Promise<Repo[] | undefined> {
     // if (page >= 3) return []
 
-    const url = `${API}/users/${username}/starred?per_page=${per_page}&page=${page}`
+    const url = `${API}/users/${u.username}/starred?per_page=${per_page}&page=${page}`
     const opt = {
       headers: {
-        ...this.headers,
+        ...this.headers(u),
         Accept: 'application/vnd.github.v3.star+json', // will include "star creation timestamps" starred_at
       },
       timeout: 10000,
@@ -65,7 +68,13 @@ class GithubService {
 
   // undefined means "unchanged" (304)
   // mutates "etagMap" if not "unchanged"
-  async getReleases (etagMap: StringMap, repoFullName: string, since: number, noLog = true): Promise<Resp<Release>> {
+  async getRepoReleases (
+    etagMap: StringMap,
+    u: User,
+    repoFullName: string,
+    since: number,
+    noLog = true,
+  ): Promise<Resp<Release>> {
     const per_page = 100
     const page = 1
     const releases: { [v: string]: Release } = {}
@@ -74,7 +83,7 @@ class GithubService {
     // 1. Releases
     const releasesUrl = `${API}/repos/${repoFullName}/releases?per_page=${per_page}&page=${page}`
     const releasesResp = await gotService.gotResponse<any[]>('get', releasesUrl, {
-      headers: this.headers,
+      headers: this.headers(u),
       etagMap, // NO: because Tags changed are we need "descr" - we need to load them anyway
       noLog,
     })
@@ -92,7 +101,7 @@ class GithubService {
     // 2. Tags (that are not "github releases")
     const tagsUrl = `${API}/repos/${repoFullName}/tags?per_page=${per_page}&page=${page}`
     const tagsResp = await gotService.gotResponse<any[]>('get', tagsUrl, {
-      headers: this.headers,
+      headers: this.headers(u),
       etagMap,
       noLog,
     })
@@ -116,7 +125,7 @@ class GithubService {
         }
 
         const res = await gotService.gotResponse('get', t.commitUrl, {
-          headers: this.headers,
+          headers: this.headers(u),
           etagMap,
           noLog,
         })
@@ -141,9 +150,9 @@ class GithubService {
     return resp
   }
 
-  async getRateLimit (): Promise<any> {
+  async getRateLimit (u: User): Promise<any> {
     const r = await gotService.get(`${API}/rate_limit`, {
-      headers: this.headers,
+      headers: this.headers(u),
     })
     return {
       ...r.rate,
