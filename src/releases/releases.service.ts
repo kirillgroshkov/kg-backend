@@ -95,6 +95,8 @@ class ReleasesService {
       repos.push(...userRepos)
     }
 
+    // todo: exclude duplicate repos
+
     let processed = 0
     let etagsSaved = 0
 
@@ -184,6 +186,7 @@ class ReleasesService {
       _minIncl ||
       DateTime.utc()
         .startOf('day')
+        .minus({ days: 3 })
         .toFormat(LUXON_ISO_DATE_FORMAT)
     const maxExcl =
       _maxExcl ||
