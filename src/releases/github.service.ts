@@ -73,6 +73,7 @@ class GithubService {
     u: User,
     repoFullName: string,
     since: number,
+    maxReleasesPerRepo?: number,
     noLog = true,
   ): Promise<Resp<Release>> {
     const per_page = 100

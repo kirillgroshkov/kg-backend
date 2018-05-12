@@ -40,6 +40,7 @@ class ReleasesService {
       user,
       'sindresorhus/p-queue',
       since,
+      0,
       false,
     )
     return r
@@ -65,7 +66,7 @@ class ReleasesService {
   }
 
   // For all users
-  async cronUpdate (_since?: number, noLog = true): Promise<any> {
+  async cronUpdate (_since?: number, singleUser?: User, maxReleasesPerRepo?: number, noLog = true): Promise<any> {
     /* noLog = false
     _since = Math.floor(
       DateTime.local()
@@ -76,15 +77,16 @@ class ReleasesService {
     console.log('ReleasesService cronUpdate since: ' + timeUtil.unixtimePretty(since))
     const resp = Resp.create<Release>()
 
-    if (resp.started / 1000 - since < 180)
+    if (!singleUser && resp.started / 1000 - since < 180)
       return {
         err: 'cronUpdate was called recently',
       }
 
+    const etagMap = await releasesDao.getEtagMap()
+
     const userIdForRepo: { [repoFullName: string]: string } = {}
 
-    const etagMap = await releasesDao.getEtagMap()
-    const usersEntries = await releasesDao.getUsersEntries()
+    const usersEntries = singleUser ? { [singleUser.id]: singleUser } : await releasesDao.getUsersEntries()
     const users = Object.values(usersEntries)
     const repos: Repo[] = []
 
@@ -113,7 +115,19 @@ class ReleasesService {
       async repo => {
         const uid = userIdForRepo[repo.fullName]
         const u = usersEntries[uid]
-        const releasesResp = await githubService.getRepoReleases(etagMap, u, repo.fullName, since, noLog)
+        const releasesResp = await githubService.getRepoReleases(
+          etagMap,
+          u,
+          repo.fullName,
+          since,
+          maxReleasesPerRepo,
+          noLog,
+        )
+
+        if (maxReleasesPerRepo && releasesResp.body.length > maxReleasesPerRepo) {
+          releasesResp.body = releasesResp.body.slice(0, maxReleasesPerRepo)
+        }
+
         resp.add(releasesResp)
         const releases = releasesResp.body
         if (releases.length) {
@@ -210,17 +224,22 @@ class ReleasesService {
       lastCheckedReleases: cacheDB.get<number>(CacheKey.lastCheckedReleases),
     })
 
-    const rmap = by(u.starredRepos, 'fullName')
+    const rmap = by(u.starredRepos || [], 'fullName')
 
-    const releases = p.feed.map(r => {
-      return {
-        // ...objectUtil.pick(r, FEED_FIELDS),
-        ...r,
-        avatarUrl: (rmap[r.repoFullName] || {}).avatarUrl,
-        // publishedAt: timeUtil.unixtimePretty(r.published),
-        // createdAt: timeUtil.unixtimePretty(r.created),
-      }
-    })
+    const releases = p.feed
+      .filter(r => {
+        // only show releases belonging to the user!
+        return !!rmap[r.repoFullName]
+      })
+      .map(r => {
+        return {
+          // ...objectUtil.pick(r, FEED_FIELDS),
+          ...r,
+          avatarUrl: (rmap[r.repoFullName] || {}).avatarUrl,
+          // publishedAt: timeUtil.unixtimePretty(r.published),
+          // createdAt: timeUtil.unixtimePretty(r.created),
+        }
+      })
 
     return {
       lastCheckedReleases: p.lastCheckedReleases,
@@ -237,7 +256,7 @@ class ReleasesService {
     cacheKeyFn: u => u.id,
   })
   async getRepos (u: User): Promise<Repo[]> {
-    return u.starredRepos
+    return u.starredRepos || []
   }
 
   async getReleasesByRepo (owner: string, name: string, limit = 100): Promise<Release[]> {
@@ -261,7 +280,7 @@ class ReleasesService {
     const since = _since || timeUtil.toUnixtime(DateTime.local().minus({ years: 2 }))
     console.log(`fetchReleasesByRepo ${repoFullName} since ${timeUtil.unixtimePretty(since)}`)
 
-    const releasesResp = await githubService.getRepoReleases(etagMap, u, repoFullName, since, false)
+    const releasesResp = await githubService.getRepoReleases(etagMap, u, repoFullName, since, 100, false)
     console.log(releasesResp)
     const releases = releasesResp.body
     if (releases.length) {
@@ -294,7 +313,9 @@ class ReleasesService {
 
     if (newUser) {
       slackService.send(`New user! ${u.username} ${u.id}`) // async
-      // todo: start cron job for this one user
+
+      const since = timeUtil.toUnixtime(DateTime.local().minus({ months: 6 }))
+      this.cronUpdate(since, u, 5) // async
     }
 
     const r: AuthResp = { newUser }
