@@ -6,6 +6,7 @@ import { Resp } from '@src/releases/resp'
 import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { firebaseService } from '@src/srv/firebase.service'
 import { firestoreService } from '@src/srv/firestore.service'
+import { sentryService } from '@src/srv/sentry.service'
 import { slackService } from '@src/srv/slack.service'
 import { StringMap } from '@src/typings/other'
 import { by } from '@src/util/object.util'
@@ -92,7 +93,11 @@ class ReleasesService {
 
     // async iteration
     for await (const u of users) {
-      const userRepos = await this.getUserStarredRepos(u, etagMap)
+      const userRepos = await this.getUserStarredRepos(u, etagMap).catch(err => {
+        // console.error(err)
+        sentryService.captureException(err)
+        return [] as Repo[]
+      })
       userRepos.forEach(repo => (userIdForRepo[repo.fullName] = u.id))
       repos.push(...userRepos)
     }
@@ -113,40 +118,44 @@ class ReleasesService {
     await P.map(
       repos,
       async repo => {
-        const uid = userIdForRepo[repo.fullName]
-        const u = usersEntries[uid]
-        const releasesResp = await githubService.getRepoReleases(
-          etagMap,
-          u,
-          repo.fullName,
-          since,
-          maxReleasesPerRepo,
-          noLog,
-        )
+        try {
+          const uid = userIdForRepo[repo.fullName]
+          const u = usersEntries[uid]
+          const releasesResp = await githubService.getRepoReleases(
+            etagMap,
+            u,
+            repo.fullName,
+            since,
+            maxReleasesPerRepo,
+            noLog,
+          )
 
-        if (maxReleasesPerRepo && releasesResp.body.length > maxReleasesPerRepo) {
-          releasesResp.body = releasesResp.body.slice(0, maxReleasesPerRepo)
-        }
+          if (maxReleasesPerRepo && releasesResp.body.length > maxReleasesPerRepo) {
+            releasesResp.body = releasesResp.body.slice(0, maxReleasesPerRepo)
+          }
 
-        resp.add(releasesResp)
-        const releases = releasesResp.body
-        if (releases.length) {
-          resp.firestoreWrites += releases.length
-          await firestoreService.saveBatch('releases', releases)
-          // console.log(`newReleases: ${resp.body.length}`)
-        }
+          resp.add(releasesResp)
+          const releases = releasesResp.body
+          if (releases.length) {
+            resp.firestoreWrites += releases.length
+            await firestoreService.saveBatch('releases', releases)
+            // console.log(`newReleases: ${resp.body.length}`)
+          }
 
-        // Save etags after each 100 cache misses
-        if (resp.githubRequests > etagsSaved + 100) {
-          etagsSaved = resp.githubRequests
-          resp.firestoreWrites++
-          releasesDao.saveEtagMap(etagMap) // async
-        }
+          // Save etags after each 100 cache misses
+          if (resp.githubRequests > etagsSaved + 100) {
+            etagsSaved = resp.githubRequests
+            resp.firestoreWrites++
+            releasesDao.saveEtagMap(etagMap) // async
+          }
 
-        processed++
-        if (processed % 100 === 0) {
-          console.log(`*** processed: ${processed}`)
-          resp.log()
+          processed++
+          if (processed % 100 === 0) {
+            console.log(`*** processed: ${processed}`)
+            resp.log()
+          }
+        } catch (err) {
+          sentryService.captureException(err)
         }
       },
       { concurrency },
