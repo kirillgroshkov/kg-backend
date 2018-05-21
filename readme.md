@@ -32,3 +32,4 @@ Add secrets:
 Add env variables:
 
     now -e MONGO_URL="user:password@mydb.com"
+
