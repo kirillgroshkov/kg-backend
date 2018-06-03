@@ -44,7 +44,7 @@ export interface Field {
 class SchemaService {
   async getSchema (project: string): Promise<AppSchema> {
     const schemaFile = `${rootDir}/editor/${project}/schema.yaml`
-    if (!await fs.pathExists(schemaFile)) throw new AppError(`Cannot find schema file: ${schemaFile}`)
+    if (!(await fs.pathExists(schemaFile))) throw new AppError(`Cannot find schema file: ${schemaFile}`)
     return yamljs.load(schemaFile)
   }
 }

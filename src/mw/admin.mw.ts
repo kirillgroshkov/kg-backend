@@ -13,7 +13,7 @@ export const adminMiddleware = (): Middleware => async (ctx: Context, next: Func
       return
     }
 
-    if (!await adminService.isAdmin(ctx)) {
+    if (!(await adminService.isAdmin(ctx))) {
       return ctx.throw(403)
     }
   }

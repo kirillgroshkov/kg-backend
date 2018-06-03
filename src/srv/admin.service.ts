@@ -50,7 +50,7 @@ class AdminService {
   }
 
   async isAuthenticated (ctx: Context): Promise<boolean> {
-    return !!await this.getEmailByToken(this.getToken(ctx))
+    return !!(await this.getEmailByToken(this.getToken(ctx)))
   }
 
   async reqAdmin (ctx: Context): Promise<void> {
