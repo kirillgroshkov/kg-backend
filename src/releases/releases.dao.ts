@@ -115,10 +115,11 @@ class ReleasesDao {
   }
 
   async getUsersEntries (): Promise<{ [uid: string]: User }> {
-    return cacheDB.entries<User>(Table.users)
+    return cacheDB.entries<User>(Table.users, 0) // always from firestore, to avoid cache
   }
 
   async getUser (uid: string): Promise<User> {
+    if (!uid) return undefined as any
     return cacheDB.get(uid, Table.users)
   }
 
@@ -133,13 +134,13 @@ class ReleasesDao {
     if (!idToken) return Promise.reject(new Error('idToken required'))
     const d = await firebaseService.verifyIdToken(idToken)
     const u = await this.getUserInfo(d.uid)*/
-    let uid = ctx.get('uid')
+    const uid = ctx.get('uid')
 
     // FOR DEBUGGING ONLY
-    if (!uid) uid = 'kr87n2F9QLcBH3ZuYEUAPl0PK6J3'
+    // if (!uid) uid = 'kr87n2F9QLcBH3ZuYEUAPl0PK6J3'
 
-    if (!uid) return Promise.reject(new Error('uid required'))
     const u = await this.getUser(uid)
+    if (!u) return Promise.reject(new Error('401 uid required'))
     console.log(`${u.id} ${u.username}`)
     return u
   }
