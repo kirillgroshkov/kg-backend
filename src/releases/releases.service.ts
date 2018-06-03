@@ -7,6 +7,7 @@ import { Resp } from '@src/releases/resp'
 import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { firebaseService } from '@src/srv/firebase.service'
 import { firestoreService } from '@src/srv/firestore.service'
+import { sendgridService } from '@src/srv/sendgrid.service'
 import { sentryService } from '@src/srv/sentry.service'
 import { SLACK_CHANNEL, slackService } from '@src/srv/slack.service'
 import { StringMap } from '@src/typings/other'
@@ -272,15 +273,10 @@ class ReleasesService {
     const maxExcl = _maxExcl || DateTime.utc(2999).toFormat(LUXON_ISO_DATE_FORMAT)
     console.log(`getFeed [${minIncl}; ${maxExcl})`)
 
-    const q = firestoreService
-      .db()
-      .collection('releases')
-      .where('published', '>=', timeUtil.isoToUnixtime(minIncl))
-      .where('published', '<', timeUtil.isoToUnixtime(maxExcl))
-      .orderBy('published', 'desc')
+    const feed = this.firestoreGetReleases(timeUtil.isoToUnixtime(minIncl), timeUtil.isoToUnixtime(maxExcl))
 
     const p = await P.props({
-      feed: firestoreService.runQuery<Release>(q),
+      feed,
       // rmap: this.getCachedStarredReposMap(),
       rateLimit: githubService.getRateLimit(u),
       lastCheckedReleases: cacheDB.get<number>(CacheKey.lastCheckedReleases),
@@ -310,6 +306,21 @@ class ReleasesService {
       lastStarred: Object.keys(rmap).slice(0, 10),
       releases,
     }
+  }
+
+  @memo({
+    ttl: 60000,
+    log: true,
+  })
+  async firestoreGetReleases (minIncl: number, maxExcl: number): Promise<Release[]> {
+    const q = firestoreService
+      .db()
+      .collection('releases')
+      .where('published', '>=', minIncl)
+      .where('published', '<', maxExcl)
+      .orderBy('published', 'desc')
+
+    return firestoreService.runQuery<Release>(q)
   }
 
   @memo({
@@ -374,7 +385,7 @@ class ReleasesService {
     releasesDao.saveUser(u) // async
 
     if (newUser) {
-      slackService.send(`New user! ${u.username} ${u.id}`, SLACK_CHANNEL.info) // async
+      this.emailNewUser(u) // async
 
       const since = timeUtil.toUnixtime(DateTime.local().minus({ months: 6 }))
       this.cronUpdate(since, u, 5) // async
@@ -395,6 +406,18 @@ class ReleasesService {
       etagFirestoreSize: Object.keys(etagMapFirestore!).length,
       etagMapJsonSizeKB,
     }
+  }
+
+  async emailNewUser (u: User): Promise<void> {
+    await Promise.all([
+      slackService.send(`New user! ${u.username} ${u.id}`, SLACK_CHANNEL.info),
+
+      sendgridService.send({
+        to: { email: '1@inventix.ru' },
+        subject: `Releases user: ${u.username} ${u.id}`,
+        content: `Tadaam!`,
+      }),
+    ])
   }
 }
 

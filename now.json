@@ -5,10 +5,11 @@
     "ENV1": "VAL1",
     "SECRET_SL_REALTIME_API_KEY": "@secret_sl_realtime_api_key",
     "SECRET_GITHUB_TOKEN": "@secret_github_token",
+    "SECRET_SENDGRID_API_KEY": "@secret_sendgrid_api_key",
     "SECRET_FIREBASE": "@secret_firebase"
   },
   "engines": {
-    "node": "8.11.1"
+    "node": "8.x"
   },
   "files": [
     "package.json",

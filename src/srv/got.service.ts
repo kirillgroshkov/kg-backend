@@ -31,12 +31,24 @@ export class GotService {
 
     if (!opt.noLog) log(`>> ${method} ${url} ${etag || ''}`)
 
-    const started = Date.now()
-    const r = await got(url, opt)
-    const etagReturned = r.headers.etag as string
-    if (!opt.noLog) log(`<< ${r.statusCode} ${method} ${url} ${etagReturned || ''} in ${Date.now() - started} ms`)
-    if (etagReturned && opt.etagMap) opt.etagMap[url] = etagReturned
-    return r
+    try {
+      const started = Date.now()
+      const r = await got(url, opt)
+      const etagReturned = r.headers.etag as string
+      if (!opt.noLog) log(`<< ${r.statusCode} ${method} ${url} ${etagReturned || ''} in ${Date.now() - started} ms`)
+      if (etagReturned && opt.etagMap) opt.etagMap[url] = etagReturned
+      return r
+    } catch (err) {
+      if (err && err.response) {
+        const r = err.response
+        const msg = `<< ERROR ${r.statusCode} ${method} ${url}\n${JSON.stringify(r.body || '<empty_body>', null, 2)}`
+        const e: any = new Error(msg)
+        e.response = r
+        throw e
+      }
+
+      throw err
+    }
   }
 
   // convenience methods
