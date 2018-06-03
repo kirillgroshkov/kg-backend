@@ -47,3 +47,8 @@ router.get('/info', async ctx => {
 router.post('/auth', async ctx => {
   ctx.body = await releasesService.auth(ctx.request.body)
 })
+
+router.put('/userSettings', async ctx => {
+  const u = await releasesDao.getUserFromContext(ctx)
+  ctx.body = await releasesService.saveUserSettings(u, ctx.request.body)
+})

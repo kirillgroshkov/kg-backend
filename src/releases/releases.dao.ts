@@ -64,6 +64,14 @@ export interface User {
   accessToken?: string
   starredRepos: Repo[]
   lastStarredRepo?: string
+  notificationEmail?: string
+  displayName?: string
+  settings: UserSettings
+}
+
+export interface UserSettings {
+  notifyEmailRealtime?: boolean
+  notifyEmailDaily?: boolean
 }
 
 // Everything Data-related should be here

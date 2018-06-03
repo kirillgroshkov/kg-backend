@@ -1,25 +1,31 @@
-import * as FirebaseAdmin from 'firebase-admin'
+import * as admin from 'firebase-admin'
 import { memo } from '../decorators/memo.decorator'
 import { secret } from '../environment/secret'
 import { log } from './log.service'
 
 class FirebaseService {
   @memo()
-  admin (): typeof FirebaseAdmin {
+  admin (): typeof admin {
     log('FirebaseService init...')
     const serviceAccount = JSON.parse(Buffer.from(secret('SECRET_FIREBASE'), 'base64').toString('utf8'))
 
-    FirebaseAdmin.initializeApp({
-      credential: FirebaseAdmin.credential.cert(serviceAccount),
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
     })
 
-    return FirebaseAdmin
+    return admin
   }
 
-  async verifyIdToken (idToken: string): Promise<FirebaseAdmin.auth.DecodedIdToken> {
+  async verifyIdToken (idToken: string): Promise<admin.auth.DecodedIdToken> {
     return this.admin()
       .auth()
       .verifyIdToken(idToken)
+  }
+
+  async getUser (uid: string): Promise<admin.auth.UserRecord> {
+    return this.admin()
+      .auth()
+      .getUser(uid)
   }
 }
 

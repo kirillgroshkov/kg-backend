@@ -2,11 +2,12 @@ import { QuerySnapshot } from '@google-cloud/firestore'
 import { memo } from '@src/decorators/memo.decorator'
 import { env } from '@src/environment/environment'
 import { githubService } from '@src/releases/github.service'
-import { CacheKey, Release, releasesDao, Repo, User } from '@src/releases/releases.dao'
+import { CacheKey, Release, releasesDao, Repo, User, UserSettings } from '@src/releases/releases.dao'
 import { Resp } from '@src/releases/resp'
 import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { firebaseService } from '@src/srv/firebase.service'
 import { firestoreService } from '@src/srv/firestore.service'
+import { nunjucksService } from '@src/srv/nunjucks.service'
 import { sendgridService } from '@src/srv/sendgrid.service'
 import { sentryService } from '@src/srv/sentry.service'
 import { SLACK_CHANNEL, slackService } from '@src/srv/slack.service'
@@ -215,15 +216,14 @@ class ReleasesService {
 
     const newReleases = resp.body
     if (newReleases.length) {
-      // Save to DB
-      // await firestoreService.saveBatch('releases', newReleases)
-
       // Slack notification
       const t: string[] = []
       t.push(`${newReleases.length} new releases:`)
       t.push(...newReleases.map(r => `${r.repoFullName}@${r.v}`))
 
       slackService.send(t.join('\n')) // async
+
+      this.emailNotifyNewReleases(newReleases, users) // async
     }
 
     const lastCheckedReleases = Math.round(resp.started / 1000)
@@ -375,12 +375,17 @@ class ReleasesService {
     const existingUser = await releasesDao.getUser(uid)
     const newUser = !existingUser
 
-    const u = {
-      ...existingUser, // to preserve "starredRepos"
+    const ur = await firebaseService.getUser(uid)
+
+    const u: User = {
+      settings: {}, // default
+      notificationEmail: ur && ur.email,
       id: uid,
+      ...existingUser, // to preserve "starredRepos"
       username: input.username,
       accessToken: input.accessToken,
       // starredRepos: [], // will be fetched later
+      displayName: ur && ur.displayName,
     }
     releasesDao.saveUser(u) // async
 
@@ -418,6 +423,85 @@ class ReleasesService {
         content: `Tadaam!`,
       }),
     ])
+  }
+
+  private async emailNotifyNewReleases (newReleases: Release[], users: User[], daily?: string): Promise<void> {
+    if (!newReleases.length) return
+
+    let emailsSent = 0
+
+    await P.map(
+      users,
+      async u => {
+        if (!u.notificationEmail) return // skipping
+        if (!u.settings) return // disabled
+        if (daily) {
+          if (!u.settings.notifyEmailDaily) return // disabled
+        } else {
+          if (!u.settings.notifyEmailRealtime) return // disabled
+        }
+
+        const repoNames = new Set<string>(u.starredRepos.map(r => r.fullName))
+        const userReleases = newReleases.filter(r => repoNames.has(r.repoFullName))
+        if (!userReleases.length) return
+
+        // Notify!
+        const releasesList = userReleases
+          .map(r => r.repoFullName)
+          .slice(0, 5)
+          .join(', ')
+        let subject: string
+        if (daily) {
+          subject = `New releases ${daily}: ${releasesList}`
+        } else {
+          subject = `New releases: ${releasesList}`
+        }
+
+        const content = await nunjucksService.render('newreleases.html', { releases: userReleases })
+
+        console.log(`>> email to ${u.notificationEmail}`)
+
+        await sendgridService.send({
+          to: {
+            email: u.notificationEmail,
+            name: u.displayName || u.notificationEmail,
+          },
+          subject,
+          content,
+        })
+        emailsSent++
+      },
+      { concurrency: 1 },
+    )
+
+    slackService.send(`Emails sent: ${emailsSent}`) // async
+  }
+
+  // To run AFTER the day is finished, e.g on 00:00 next day or later
+  async emailNotifyNewReleasesDaily (): Promise<void> {
+    const maxExcl = DateTime.utc().startOf('day')
+    const minIncl = maxExcl.minus({ days: 1 })
+    console.log(
+      `emailNotifyNewReleasesDaily: ${timeUtil.toDateTimePretty(minIncl)} - ${timeUtil.toDateTimePretty(maxExcl)}`,
+    )
+
+    const newReleases = await this.firestoreGetReleases(timeUtil.toUnixtime(minIncl), timeUtil.toUnixtime(maxExcl))
+    console.log('Daily new releases: ' + newReleases.length)
+
+    if (!newReleases.length) return
+
+    const users = await releasesDao.getUsers()
+
+    await this.emailNotifyNewReleases(newReleases, users, timeUtil.toDatePretty(minIncl))
+  }
+
+  async saveUserSettings (u: User, input: UserSettings): Promise<any> {
+    // todo: pick, validate
+    Object.assign(u, {
+      settings: input,
+    })
+    await releasesDao.saveUser(u)
+    return { ok: 1 }
   }
 }
 

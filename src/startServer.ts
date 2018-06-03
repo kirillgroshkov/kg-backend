@@ -46,6 +46,9 @@ async function setup (): Promise<void> {
     nodeSchedule.scheduleJob('*/20 * * * *', () => releasesService.cronUpdate())
     // nodeSchedule.scheduleJob('0 * * * *', () => releasesService.cronUpdate())
 
+    // Email of new releases daily
+    nodeSchedule.scheduleJob('0 0 * * *', () => releasesService.emailNotifyNewReleasesDaily())
+
     slackService.send('server started', SLACK_CHANNEL.info) // async
   }
 }

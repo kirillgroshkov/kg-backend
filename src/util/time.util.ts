@@ -31,6 +31,14 @@ class TimeUtil {
     return DateTime.fromISO(iso).toFormat(FORMAT_DATETIME_PRETTY)
   }
 
+  toDatePretty (dt: DateTime): string {
+    return dt.toFormat(LUXON_ISO_DATE_FORMAT)
+  }
+
+  toDateTimePretty (dt: DateTime): string {
+    return dt.toFormat(FORMAT_DATETIME_PRETTY)
+  }
+
   nowUnixtime (): number {
     return Math.floor(Date.now() / 1000)
   }
