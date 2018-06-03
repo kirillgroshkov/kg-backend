@@ -2,6 +2,7 @@ import { DocumentSnapshot, Firestore, Query, QueryDocumentSnapshot, QuerySnapsho
 import { memo } from '@src/decorators/memo.decorator'
 import { firebaseService } from '@src/srv/firebase.service'
 import { log } from '@src/srv/log.service'
+import { sentryService } from '@src/srv/sentry.service'
 import { stringUtil } from '@src/util/string.util'
 
 class FirestoreService {
@@ -45,10 +46,15 @@ class FirestoreService {
     const docSize = JSON.stringify(doc || {}).length
     console.log(`firestoreService.saveDoc ${colName}.${docId} size=${docSize}`)
 
-    return this.db()
+    return await this.db()
       .collection(colName)
       .doc(this.escapeDocId(docId!))
       .set(doc)
+      .catch(err => {
+        sentryService.captureMessage(`error in saveDoc ${colName} docId=${docId}, docSize=${docSize}`)
+        // console.log('str doc:\n', JSON.stringify(doc))
+        throw err
+      })
   }
 
   async saveBatch (colName: string, _docs: any[]): Promise<void> {

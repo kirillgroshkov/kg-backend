@@ -1,5 +1,6 @@
 import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { StringMap } from '@src/typings/other'
+import { zipUtil } from '@src/util/zip.util'
 import { IRouterContext } from 'koa-router'
 import { DateTime } from 'luxon'
 
@@ -81,11 +82,19 @@ class ReleasesDao {
   }
 
   async getEtagMap (): Promise<StringMap> {
-    return cacheDB.getOrDefault<StringMap>(CacheKey.etagMap, {})
+    const m = await cacheDB.get<Buffer>(CacheKey.etagMap)
+    if (!m) return {} // default
+    try {
+      return JSON.parse(await zipUtil.inflateStr(m))
+    } catch (err) {
+      console.warn('error reading etagMap')
+      return {}
+    }
   }
 
   async saveEtagMap (etagMap: StringMap): Promise<void> {
-    await cacheDB.set(CacheKey.etagMap, etagMap)
+    const b = await zipUtil.deflate(JSON.stringify(etagMap || {}))
+    await cacheDB.set(CacheKey.etagMap, b)
   }
 
   // Now per User

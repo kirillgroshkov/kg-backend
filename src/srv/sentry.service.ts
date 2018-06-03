@@ -31,6 +31,15 @@ class SentryService {
       console.log('Sentry reported error ' + eventId)
     })
   }
+
+  captureMessage (msg: string): void {
+    console.log('sentryService.captureMessage: ' + msg)
+    if (!env().sentryDsn) return
+
+    this.raven().captureMessage(msg, (err: any, eventId: string) => {
+      console.log('Sentry reported error ' + eventId)
+    })
+  }
 }
 
 export const sentryService = new SentryService()

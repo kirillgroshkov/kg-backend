@@ -26,7 +26,19 @@ export class FileCacheDBAdapter implements CacheDBAdapter {
 
   async set (key: string, value: any, table?: string): Promise<void> {
     const filePath = await this.getFilePath(table, key)
-    const v = JSON.stringify(value, undefined, 2)
+    let v: any = value
+
+    if (value && value._value instanceof Buffer) {
+      // Buffer case
+      v = {
+        ...value,
+        type: 'buffer',
+      }
+      await fs.writeFile(filePath + '.buffer', value._value)
+      delete v._value
+    }
+
+    v = JSON.stringify(v, undefined, 2)
     await fs.writeFile(filePath, v)
   }
 
@@ -34,7 +46,13 @@ export class FileCacheDBAdapter implements CacheDBAdapter {
     const file = await this.getFilePath(table, key)
     if (!(await fs.pathExists(file))) return undefined
     const v = await fs.readFile(file, 'utf8')
-    return v ? JSON.parse(v) : undefined
+    const r = v ? JSON.parse(v) : undefined
+    if (r && r.type === 'buffer') {
+      // Buffer case
+      r._value = await fs.readFile(file + '.buffer')
+    }
+
+    return r
   }
 
   async delete (key: string, table?: string): Promise<void> {

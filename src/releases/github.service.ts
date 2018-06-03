@@ -1,6 +1,6 @@
 import { Release, ReleaseType, Repo, Tag, User } from '@src/releases/releases.dao'
 import { Resp } from '@src/releases/resp'
-import { gotService } from '@src/srv/got.service'
+import { GotResponse, gotService } from '@src/srv/got.service'
 import * as P from 'bluebird'
 import { firestoreService } from '../srv/firestore.service'
 import { StringMap } from '../typings/other'
@@ -83,11 +83,23 @@ class GithubService {
 
     // 1. Releases
     const releasesUrl = `${API}/repos/${repoFullName}/releases?per_page=${per_page}&page=${page}`
-    const releasesResp = await gotService.gotResponse<any[]>('get', releasesUrl, {
-      headers: this.headers(u),
-      etagMap, // NO: because Tags changed are we need "descr" - we need to load them anyway
-      noLog,
-    })
+    let releasesResp: GotResponse<any[]>
+
+    try {
+      releasesResp = await gotService.gotResponse<any[]>('get', releasesUrl, {
+        headers: this.headers(u),
+        etagMap, // NO: because Tags changed are we need "descr" - we need to load them anyway
+        noLog,
+      })
+    } catch (err) {
+      if (err && err.response && err.response.statusCode === 451) {
+        // Unavailable for legal reasons, e.g: "gloomyson/StarCraft"
+        console.log(`${repoFullName} resp 451`)
+        return resp // empty
+      }
+      throw err // rethrow
+    }
+
     if (releasesResp.statusCode === 304) {
       resp.etagHits++
     } else {

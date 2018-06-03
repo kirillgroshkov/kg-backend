@@ -37,8 +37,8 @@ export class ObjectUtil {
     return JSON.parse(JSON.stringify(o))
   }
 
-  isObject (item: any): boolean {
-    return item && typeof item === 'object' && !Array.isArray(item) && item !== null
+  isObject (i: any): boolean {
+    return i && typeof i === 'object' && !Array.isArray(i) && i !== null && !(i instanceof Buffer)
   }
 
   isEmpty (obj: any): boolean {
