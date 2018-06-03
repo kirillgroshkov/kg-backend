@@ -11,7 +11,7 @@ import { releasesService } from '@src/releases/releases.service'
 import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
-import { slackService } from '@src/srv/slack.service'
+import { SLACK_CHANNEL, slackService } from '@src/srv/slack.service'
 import * as nodeSchedule from 'node-schedule'
 
 Promise.resolve()
@@ -43,9 +43,9 @@ async function setup (): Promise<void> {
     nodeSchedule.scheduleJob('* * * * *', () => dontsleepService.run())
 
     // Update github releases
-    nodeSchedule.scheduleJob('*/10 * * * *', () => releasesService.cronUpdate())
+    nodeSchedule.scheduleJob('*/20 * * * *', () => releasesService.cronUpdate())
     // nodeSchedule.scheduleJob('0 * * * *', () => releasesService.cronUpdate())
 
-    slackService.send('server started') // async
+    slackService.send('server started', SLACK_CHANNEL.info) // async
   }
 }

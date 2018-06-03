@@ -41,8 +41,7 @@ router.get('/releases/:id', async ctx => {
 })
 
 router.get('/info', async ctx => {
-  const user = await releasesDao.getUserFromContext(ctx)
-  ctx.body = await githubService.getRateLimit(user)
+  ctx.body = await releasesService.info()
 })
 
 router.post('/auth', async ctx => {

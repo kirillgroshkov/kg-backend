@@ -1,13 +1,15 @@
 import { QuerySnapshot } from '@google-cloud/firestore'
 import { memo } from '@src/decorators/memo.decorator'
+import { env } from '@src/environment/environment'
 import { githubService } from '@src/releases/github.service'
 import { CacheKey, Release, releasesDao, Repo, User } from '@src/releases/releases.dao'
 import { Resp } from '@src/releases/resp'
 import { cacheDB } from '@src/srv/cachedb/cachedb'
+import { FirestoreCacheDBAdapter } from '@src/srv/cachedb/firestore.cachedb.adapter'
 import { firebaseService } from '@src/srv/firebase.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import { sentryService } from '@src/srv/sentry.service'
-import { slackService } from '@src/srv/slack.service'
+import { SLACK_CHANNEL, slackService } from '@src/srv/slack.service'
 import { StringMap } from '@src/typings/other'
 import { by } from '@src/util/object.util'
 import { LUXON_ISO_DATE_FORMAT, timeUtil } from '@src/util/time.util'
@@ -177,7 +179,10 @@ class ReleasesService {
     const lastCheckedReleases = Math.round(resp.started / 1000)
     resp.firestoreWrites += 2
     releasesDao.saveEtagMap(etagMap) // async
-    releasesDao.saveLastCheckedReleases(lastCheckedReleases) // async
+
+    if (env().prod) {
+      releasesDao.saveLastCheckedReleases(lastCheckedReleases) // async
+    }
 
     resp.finish()
     const logMsg = [
@@ -203,7 +208,7 @@ class ReleasesService {
     log: true,
     cacheKeyFn: (u, _minIncl, _maxExcl) => [u.id, _minIncl, _maxExcl].join(),
   })
-  async getFeed (u: User, _minIncl: string, _maxExcl: string): Promise<any> {
+  async getFeed (u: User, _minIncl: string, _maxExcl?: string): Promise<any> {
     // defaults
     const minIncl =
       _minIncl ||
@@ -211,12 +216,7 @@ class ReleasesService {
         .startOf('day')
         .minus({ days: 3 })
         .toFormat(LUXON_ISO_DATE_FORMAT)
-    const maxExcl =
-      _maxExcl ||
-      DateTime.utc()
-        .startOf('day')
-        .plus({ days: 1 })
-        .toFormat(LUXON_ISO_DATE_FORMAT)
+    const maxExcl = _maxExcl || DateTime.utc(2999).toFormat(LUXON_ISO_DATE_FORMAT)
     console.log(`getFeed [${minIncl}; ${maxExcl})`)
 
     const q = firestoreService
@@ -321,7 +321,7 @@ class ReleasesService {
     releasesDao.saveUser(u) // async
 
     if (newUser) {
-      slackService.send(`New user! ${u.username} ${u.id}`) // async
+      slackService.send(`New user! ${u.username} ${u.id}`, SLACK_CHANNEL.info) // async
 
       const since = timeUtil.toUnixtime(DateTime.local().minus({ months: 6 }))
       this.cronUpdate(since, u, 5) // async
@@ -330,6 +330,18 @@ class ReleasesService {
     const r: AuthResp = { newUser }
 
     return r
+  }
+
+  async info (): Promise<any> {
+    const etagMap = await releasesDao.getEtagMap()
+    const etagMapFirestore = await firestoreService.getDoc<StringMap>('cacheDB', CacheKey.etagMap)
+    const etagMapJsonSizeKB = Math.ceil(JSON.stringify(etagMapFirestore).length / 1024)
+
+    return {
+      etagMapSize: Object.keys(etagMap).length,
+      etagFirestoreSize: Object.keys(etagMapFirestore!).length,
+      etagMapJsonSizeKB,
+    }
   }
 }
 

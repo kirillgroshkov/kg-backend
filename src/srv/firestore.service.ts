@@ -42,7 +42,8 @@ class FirestoreService {
 
   async saveDoc (colName: string, doc: any, docId?: string): Promise<any> {
     docId = docId || doc.id
-    console.log(`firestoreService.saveDoc ${colName}.${docId}`)
+    const docSize = JSON.stringify(doc || {}).length
+    console.log(`firestoreService.saveDoc ${colName}.${docId} size=${docSize}`)
 
     return this.db()
       .collection(colName)

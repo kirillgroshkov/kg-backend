@@ -10,18 +10,26 @@ export interface SlackMessage {
   text: string
 }
 
+export enum SLACK_CHANNEL {
+  log = 'log',
+  info = 'info',
+}
+
 class SlackService {
   private get defaults (): SlackMessage {
     return {
       username: 'kg-backend',
-      channel: '#log',
+      channel: '#' + SLACK_CHANNEL.log,
       icon_emoji: ':spider_web:',
       text: 'no text',
     }
   }
 
-  async send (text: string): Promise<void> {
-    await this.sendMsg({ text })
+  async send (text: string, channel = SLACK_CHANNEL.log): Promise<void> {
+    await this.sendMsg({
+      text,
+      channel: '#' + channel,
+    })
   }
 
   async sendMsg (_msg: SlackMessage): Promise<void> {
