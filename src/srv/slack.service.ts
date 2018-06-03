@@ -33,7 +33,10 @@ class SlackService {
   }
 
   async sendMsg (_msg: SlackMessage): Promise<void> {
-    if (!env().slackWebhookUrl) return
+    if (!env().slackWebhookUrl) {
+      console.log('SLACK:\n' + _msg.text)
+      return
+    }
 
     const body = {
       ...this.defaults,

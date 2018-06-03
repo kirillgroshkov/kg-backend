@@ -5,7 +5,6 @@ import { githubService } from '@src/releases/github.service'
 import { CacheKey, Release, releasesDao, Repo, User } from '@src/releases/releases.dao'
 import { Resp } from '@src/releases/resp'
 import { cacheDB } from '@src/srv/cachedb/cachedb'
-import { FirestoreCacheDBAdapter } from '@src/srv/cachedb/firestore.cachedb.adapter'
 import { firebaseService } from '@src/srv/firebase.service'
 import { firestoreService } from '@src/srv/firestore.service'
 import { sentryService } from '@src/srv/sentry.service'
@@ -49,8 +48,30 @@ class ReleasesService {
     return r
   }
 
+  private reportError (err: any): void {
+    sentryService.captureException(err)
+  }
+
+  private async onUserErr (err: any, u: User): Promise<void> {
+    if (!err || !err.response || (err.response.statusCode !== 401 && err.response.statusCode !== 404)) {
+      sentryService.captureException(err)
+      return
+    }
+
+    await this.onUser401(u)
+  }
+
+  private async onUser401 (u: User): Promise<void> {
+    // 401, token is expired / revoked
+    slackService.send(`${u.username} ${u.id} token ${u.accessToken} became invalid`, SLACK_CHANNEL.info) // async
+
+    delete u.accessToken
+    await releasesDao.saveUser(u)
+  }
+
   private async getUserStarredRepos (u: User, etagMap: StringMap): Promise<Repo[]> {
-    const repos = await githubService.getUserStarredRepos(u, etagMap)
+    const repos = await githubService.getUserStarredRepos(u, etagMap).catch(err => this.onUserErr(err, u))
+
     if (repos) {
       if (repos.length) {
         console.log(`${u.username} starred repos CHANGED`)
@@ -90,21 +111,49 @@ class ReleasesService {
     const userIdForRepo: { [repoFullName: string]: string } = {}
 
     const usersEntries = singleUser ? { [singleUser.id]: singleUser } : await releasesDao.getUsersEntries()
-    const users = Object.values(usersEntries)
-    const repos: Repo[] = []
+    const users = Object.values(usersEntries).filter(u => u.accessToken)
 
-    // async iteration
-    for await (const u of users) {
+    const allRepos: Repo[] = []
+
+    const mapper = async (u: User): Promise<void> => {
       const userRepos = await this.getUserStarredRepos(u, etagMap).catch(err => {
-        // console.error(err)
-        sentryService.captureException(err)
+        this.reportError(err)
         return [] as Repo[]
       })
       userRepos.forEach(repo => (userIdForRepo[repo.fullName] = u.id))
-      repos.push(...userRepos)
+      allRepos.push(...userRepos)
     }
 
-    // todo: exclude duplicate repos
+    const promises = users.map(u => mapper(u))
+    await Promise.all(promises) // unlimited concurrency here!
+
+    // async iteration
+    /*for await (const u of users) {
+      const userRepos = await this.getUserStarredRepos(u, etagMap)
+        .catch(err => {
+          this.reportError(err)
+          return [] as Repo[]
+        })
+      userRepos.forEach(repo => (userIdForRepo[repo.fullName] = u.id))
+      allRepos.push(...userRepos)
+    }*/
+
+    // deduplicate repos
+    const repos: Repo[] = []
+    const repoFullNames = new Set<string>()
+    allRepos.forEach(r => {
+      if (repoFullNames.has(r.fullName)) return
+      repoFullNames.add(r.fullName)
+      repos.push(r)
+    })
+
+    /*
+    if (1 === 1) return {
+      repos: repos.length,
+      allRepos: allRepos.length,
+      users: users.length,
+      usersEntries: Object.keys(usersEntries).length,
+    }*/
 
     let processed = 0
     let etagsSaved = 0
@@ -177,10 +226,11 @@ class ReleasesService {
     }
 
     const lastCheckedReleases = Math.round(resp.started / 1000)
-    resp.firestoreWrites += 2
+    resp.firestoreWrites++
     releasesDao.saveEtagMap(etagMap) // async
 
     if (env().prod) {
+      resp.firestoreWrites++
       releasesDao.saveLastCheckedReleases(lastCheckedReleases) // async
     }
 
@@ -190,6 +240,9 @@ class ReleasesService {
       'newReleases: ' + newReleases.length,
       'etagMap items: ' + Object.keys(etagMap).length,
       'starred repos: ' + repos.length,
+      'allRepos: ' + allRepos.length,
+      'users: ' + users.length,
+      'usersEntries: ' + Object.keys(usersEntries).length,
       ...resp.getLog(),
       ``,
     ].join('\n')

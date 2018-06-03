@@ -60,7 +60,7 @@ export interface RepoMap {
 export interface User {
   id: string
   username: string
-  accessToken: string
+  accessToken?: string
   starredRepos: Repo[]
   lastStarredRepo?: string
 }

@@ -24,6 +24,7 @@ class SentryService {
   }
 
   captureException (err: any): void {
+    console.error('sentryService.captureException:\n', err)
     if (!env().sentryDsn) return
 
     this.raven().captureException(err, (err: any, eventId: string) => {
