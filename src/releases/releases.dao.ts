@@ -74,6 +74,16 @@ export interface UserSettings {
   notifyEmailDaily?: boolean
 }
 
+// frontend model of User
+export interface UserFM {
+  id: string
+  username: string
+  starredReposCount: number
+  notificationEmail?: string
+  displayName?: string
+  settings: UserSettings
+}
+
 // Everything Data-related should be here
 class ReleasesDao {
   async getLastCheckedReleases (): Promise<number> {
@@ -161,6 +171,17 @@ class ReleasesDao {
 
     if (!uid) throw new Error('uid required')
     return uid
+  }
+
+  userToFM (u: User): UserFM {
+    return {
+      id: u.id,
+      username: u.username,
+      starredReposCount: (u.starredRepos || []).length,
+      notificationEmail: u.notificationEmail,
+      displayName: u.displayName,
+      settings: u.settings || {},
+    }
   }
 }
 

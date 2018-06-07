@@ -52,3 +52,8 @@ router.put('/userSettings', async ctx => {
   const u = await releasesDao.getUserFromContext(ctx)
   ctx.body = await releasesService.saveUserSettings(u, ctx.request.body)
 })
+
+router.get('/init', async ctx => {
+  const u = await releasesDao.getUserFromContext(ctx)
+  ctx.body = await releasesService.init(u)
+})

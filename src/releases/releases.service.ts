@@ -2,7 +2,7 @@ import { QuerySnapshot } from '@google-cloud/firestore'
 import { memo } from '@src/decorators/memo.decorator'
 import { env } from '@src/environment/environment'
 import { githubService } from '@src/releases/github.service'
-import { CacheKey, Release, releasesDao, Repo, User, UserSettings } from '@src/releases/releases.dao'
+import { CacheKey, Release, releasesDao, Repo, User, UserFM, UserSettings } from '@src/releases/releases.dao'
 import { Resp } from '@src/releases/resp'
 import { cacheDB } from '@src/srv/cachedb/cachedb'
 import { firebaseService } from '@src/srv/firebase.service'
@@ -24,8 +24,9 @@ export interface AuthInput {
   idToken: string
 }
 
-export interface AuthResp {
-  newUser: boolean
+export interface BackendResponse {
+  newUser?: boolean
+  userFM?: UserFM
 }
 
 const concurrency = 8
@@ -367,7 +368,7 @@ class ReleasesService {
     return (await firestoreService.getDoc('releases', id)) || 'not found'
   }
 
-  async auth (input: AuthInput): Promise<any> {
+  async auth (input: AuthInput): Promise<BackendResponse> {
     const d = await firebaseService.verifyIdToken(input.idToken)
     const uid = d.uid
     // console.log('d', JSON.stringify(d, null, 2))
@@ -396,9 +397,12 @@ class ReleasesService {
       this.cronUpdate(since, u, 5) // async
     }
 
-    const r: AuthResp = { newUser }
+    const br: BackendResponse = {
+      newUser,
+      userFM: releasesDao.userToFM(u),
+    }
 
-    return r
+    return br
   }
 
   async info (): Promise<any> {
@@ -502,6 +506,12 @@ class ReleasesService {
     })
     await releasesDao.saveUser(u)
     return { ok: 1 }
+  }
+
+  async init (u: User): Promise<BackendResponse> {
+    return {
+      userFM: releasesDao.userToFM(u),
+    } as BackendResponse
   }
 }
 
