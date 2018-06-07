@@ -379,8 +379,9 @@ class ReleasesService {
     const ur = await firebaseService.getUser(uid)
 
     const u: User = {
-      settings: {}, // default
-      notificationEmail: ur && ur.email,
+      settings: {
+        notificationEmail: ur && ur.email,
+      }, // default
       id: uid,
       ...existingUser, // to preserve "starredRepos"
       username: input.username,
@@ -437,8 +438,7 @@ class ReleasesService {
     await P.map(
       users,
       async u => {
-        if (!u.notificationEmail) return // skipping
-        if (!u.settings) return // disabled
+        if (!u.settings || !u.settings.notificationEmail) return // disabled
         if (daily) {
           if (!u.settings.notifyEmailDaily) return // disabled
         } else {
@@ -463,12 +463,12 @@ class ReleasesService {
 
         const content = await nunjucksService.render('newreleases.html', { releases: userReleases })
 
-        console.log(`>> email to ${u.notificationEmail}`)
+        console.log(`>> email to ${u.settings.notificationEmail}`)
 
         await sendgridService.send({
           to: {
-            email: u.notificationEmail,
-            name: u.displayName || u.notificationEmail,
+            email: u.settings.notificationEmail,
+            name: u.displayName || u.settings.notificationEmail,
           },
           subject,
           content,
@@ -499,19 +499,22 @@ class ReleasesService {
     await this.emailNotifyNewReleases(newReleases, users, timeUtil.toDatePretty(minIncl))
   }
 
-  async saveUserSettings (u: User, input: UserSettings): Promise<any> {
+  async saveUserSettings (u: User, input: UserSettings): Promise<BackendResponse> {
     // todo: pick, validate
     Object.assign(u, {
       settings: input,
     })
     await releasesDao.saveUser(u)
-    return { ok: 1 }
+
+    return {
+      userFM: releasesDao.userToFM(u),
+    }
   }
 
   async init (u: User): Promise<BackendResponse> {
     return {
       userFM: releasesDao.userToFM(u),
-    } as BackendResponse
+    }
   }
 }
 

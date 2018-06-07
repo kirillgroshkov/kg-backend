@@ -64,12 +64,12 @@ export interface User {
   accessToken?: string
   starredRepos: Repo[]
   lastStarredRepo?: string
-  notificationEmail?: string
   displayName?: string
   settings: UserSettings
 }
 
 export interface UserSettings {
+  notificationEmail?: string
   notifyEmailRealtime?: boolean
   notifyEmailDaily?: boolean
 }
@@ -79,7 +79,6 @@ export interface UserFM {
   id: string
   username: string
   starredReposCount: number
-  notificationEmail?: string
   displayName?: string
   settings: UserSettings
 }
@@ -128,6 +127,7 @@ class ReleasesDao {
     return cacheDB.getOrDefault(CacheKey.starredRepos, [])
   }*/
 
+  // todo: ttl! or just use getUserEntries instead
   async getUsers (): Promise<User[]> {
     return cacheDB.values<User>(Table.users)
   }
@@ -178,7 +178,6 @@ class ReleasesDao {
       id: u.id,
       username: u.username,
       starredReposCount: (u.starredRepos || []).length,
-      notificationEmail: u.notificationEmail,
       displayName: u.displayName,
       settings: u.settings || {},
     }
