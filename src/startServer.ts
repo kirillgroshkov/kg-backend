@@ -43,7 +43,7 @@ async function setup (): Promise<void> {
     nodeSchedule.scheduleJob('* * * * *', () => dontsleepService.run())
 
     // Update github releases
-    nodeSchedule.scheduleJob('*/20 * * * *', () => releasesService.cronUpdate())
+    nodeSchedule.scheduleJob('*/30 * * * *', () => releasesService.cronUpdate())
     // nodeSchedule.scheduleJob('0 * * * *', () => releasesService.cronUpdate())
 
     // Email of new releases daily
