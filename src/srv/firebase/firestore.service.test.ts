@@ -1,4 +1,4 @@
-import { firestoreService } from '@src/srv/firestore.service'
+import { firestoreService } from 'firestore.service'
 
 test('saveBatch', async () => {
   const items = []

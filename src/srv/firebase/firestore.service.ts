@@ -1,6 +1,6 @@
 import { DocumentSnapshot, Firestore, Query, QueryDocumentSnapshot, QuerySnapshot } from '@google-cloud/firestore'
 import { memo } from '@src/decorators/memo.decorator'
-import { firebaseService } from '@src/srv/firebase.service'
+import { firebaseService } from '@src/srv/firebase/firebase.service'
 import { log } from '@src/srv/log.service'
 import { sentryService } from '@src/srv/sentry.service'
 import { stringUtil } from '@src/util/string.util'

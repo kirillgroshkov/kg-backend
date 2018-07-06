@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra'
 import { Context } from 'koa'
 import { staticDir } from '../cnst/paths.cnst'
-import { firebaseService } from './firebase.service'
+import { firebaseService } from './firebase/firebase.service'
 import { log } from './log.service'
 
 const ADMIN_LIST: string[] = ['ceo@inventix.ru']

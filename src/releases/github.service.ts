@@ -2,7 +2,7 @@ import { Release, ReleaseType, Repo, Tag, User } from '@src/releases/releases.da
 import { Resp } from '@src/releases/resp'
 import { GotResponse, gotService } from '@src/srv/got.service'
 import * as P from 'bluebird'
-import { firestoreService } from '../srv/firestore.service'
+import { firestoreService } from '../srv/firebase/firestore.service'
 import { StringMap } from '../typings/other'
 import { timeUtil } from '../util/time.util'
 

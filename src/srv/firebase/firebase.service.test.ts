@@ -1,4 +1,4 @@
-import { firebaseService } from '@src/srv/firebase.service'
+import { firebaseService } from 'firebase.service'
 
 test('getUser', async () => {
   const u = await firebaseService.getUser('kr87n2F9QLcBH3ZuYEUAPl0PK6J3')

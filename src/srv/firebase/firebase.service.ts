@@ -1,7 +1,7 @@
+import { memo } from '@src/decorators/memo.decorator'
+import { secret } from '@src/environment/secret'
 import * as admin from 'firebase-admin'
-import { memo } from '../decorators/memo.decorator'
-import { secret } from '../environment/secret'
-import { log } from './log.service'
+import { log } from '../log.service'
 
 class FirebaseService {
   @memo()

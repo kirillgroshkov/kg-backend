@@ -1,7 +1,7 @@
 import { api } from '@src/api'
 import { schemaService } from '@src/editor/schema.service'
 import { AppError } from '@src/error/app.error'
-import { firestoreService } from '@src/srv/firestore.service'
+import { firestoreService } from '@src/srv/firebase/firestore.service'
 import * as P from 'bluebird'
 
 class EditorService {

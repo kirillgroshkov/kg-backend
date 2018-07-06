@@ -1,5 +1,5 @@
 import { CacheDBAdapter } from '@src/srv/cachedb/cachedb'
-import { firestoreService } from '@src/srv/firestore.service'
+import { firestoreService } from '@src/srv/firebase/firestore.service'
 
 export class FirestoreCacheDBAdapter implements CacheDBAdapter {
   constructor (public defaultTable = 'cacheDB') {}
