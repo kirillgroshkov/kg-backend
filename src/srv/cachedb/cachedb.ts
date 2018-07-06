@@ -19,7 +19,7 @@ export interface WrappedValue<T> {
   _value: T
 }
 
-class CacheDB implements CacheDBAdapter {
+export class CacheDB implements CacheDBAdapter {
   name = 'CacheDB'
   adapters: CacheDBAdapter[] = [new MapCacheDBAdapter()] // default
   defaultTtl?: number = undefined
@@ -172,3 +172,4 @@ class CacheDB implements CacheDBAdapter {
 }
 
 export const cacheDB = new CacheDB()
+export const firebaseStorageCacheDB = new CacheDB()

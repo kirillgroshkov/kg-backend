@@ -3,8 +3,8 @@ import { firebaseStorageService } from '@src/srv/firebase/firebase.storage.servi
 test('test1', async () => {
   // const bucket = firebaseStorageService.bucket()
   // await bucket.file('sdf.txt').save('abcd')
-  await firebaseStorageService.saveFile('aaa.txt', 'abcd')
-  const b = await firebaseStorageService.loadFile('aaa.txt')
-  console.log(b.toString('utf8'))
-  await firebaseStorageService.deleteFile('aaa.txt')
+  // await firebaseStorageService.saveFile('f/aaa.txt', 'abcd')
+  const b = await firebaseStorageService.loadFile('f/aaa1.txt')
+  // console.log(b.toString('utf8'))
+  // await firebaseStorageService.deleteFile('aaa.txt')
 })

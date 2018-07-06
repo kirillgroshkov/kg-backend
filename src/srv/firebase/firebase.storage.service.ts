@@ -21,11 +21,20 @@ class FirebaseStorageService {
       .save(data)
   }
 
-  async loadFile (fileName: string): Promise<Buffer> {
+  async loadFile (fileName: string): Promise<Buffer | undefined> {
     log(`<< Storage loadFile ${fileName}`)
     const [b] = await this.bucket()
       .file(fileName)
       .download()
+      .catch(err => {
+        if (err && err.code === 404) {
+          log(`<< Storage loadFile ${fileName} not found`)
+          return [undefined]
+        }
+
+        log.error(`<< Storage loadFile ${fileName} error: ${err.message}`)
+        return [undefined]
+      })
     return b
   }
 

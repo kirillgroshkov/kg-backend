@@ -81,7 +81,7 @@ class ReleasesService {
         u.lastStarredRepo = repos[0].fullName
         u.starredRepos = repos
         releasesDao.saveUser(u) // async
-        releasesDao.saveEtagMap(etagMap) // async
+        // releasesDao.saveEtagMap(etagMap) // async
       } else {
         console.log(`${u.username} starred repos CHANGED, but returned zero!?`)
       }

@@ -132,10 +132,12 @@ class GithubService {
         // if (t.v.includes('/')) continue // todo: support in Firestore
 
         // check if we already have it in DB
+        // NO, cause it eats the reading quota heavily
+        /*
         resp.firestoreReads++
         if (await firestoreService.getDoc('releases', t.id)) {
           break // we already have it
-        }
+        }*/
 
         const res = await gotService.gotResponse('get', t.commitUrl, {
           headers: this.headers(u),

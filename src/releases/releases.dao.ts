@@ -1,4 +1,4 @@
-import { cacheDB } from '@src/srv/cachedb/cachedb'
+import { cacheDB, firebaseStorageCacheDB } from '@src/srv/cachedb/cachedb'
 import { StringMap } from '@src/typings/other'
 import { zipUtil } from '@src/util/zip.util'
 import { IRouterContext } from 'koa-router'
@@ -99,7 +99,7 @@ class ReleasesDao {
   }
 
   async getEtagMap (): Promise<StringMap> {
-    const m = await cacheDB.get<Buffer>(CacheKey.etagMap)
+    const m = await firebaseStorageCacheDB.get<Buffer>(CacheKey.etagMap)
     if (!m) return {} // default
     try {
       return JSON.parse(await zipUtil.inflateStr(m))
@@ -111,7 +111,7 @@ class ReleasesDao {
 
   async saveEtagMap (etagMap: StringMap): Promise<void> {
     const b = await zipUtil.deflate(JSON.stringify(etagMap || {}))
-    await cacheDB.set(CacheKey.etagMap, b)
+    await firebaseStorageCacheDB.set(CacheKey.etagMap, b)
   }
 
   // Now per User

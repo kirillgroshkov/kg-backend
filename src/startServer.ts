@@ -8,7 +8,7 @@ import { api } from '@src/api'
 import { env } from '@src/environment/environment'
 import { secretInit } from '@src/environment/secret'
 import { releasesService } from '@src/releases/releases.service'
-import { cacheDB } from '@src/srv/cachedb/cachedb'
+import { cacheDB, firebaseStorageCacheDB } from '@src/srv/cachedb/cachedb'
 import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
 import { SLACK_CHANNEL, slackService } from '@src/srv/slack.service'
@@ -37,13 +37,14 @@ async function setup (): Promise<void> {
 
   cacheDB.adapters = env().cacheDBAdapters
   cacheDB.defaultTtl = env().cacheDBDefaultTtl
+  firebaseStorageCacheDB.adapters = env().firebaseStorageCacheDBAdapters
 
   if (env().prod) {
     // Don't sleep :)
     nodeSchedule.scheduleJob('* * * * *', () => dontsleepService.run())
 
     // Update github releases
-    nodeSchedule.scheduleJob('0 * * * *', () => releasesService.cronUpdate())
+    nodeSchedule.scheduleJob('0 */2 * * *', () => releasesService.cronUpdate())
     // nodeSchedule.scheduleJob('0 * * * *', () => releasesService.cronUpdate())
 
     // Email of new releases daily

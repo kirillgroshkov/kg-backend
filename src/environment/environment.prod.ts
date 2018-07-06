@@ -1,4 +1,5 @@
 import { CacheDBAdapter } from '@src/srv/cachedb/cachedb'
+import { FirebaseStorageCacheDBAdapter } from '@src/srv/cachedb/firebase.storage.cachedb.adapter'
 import { FirestoreCacheDBAdapter } from '@src/srv/cachedb/firestore.cachedb.adapter'
 import { MapCacheDBAdapter } from '@src/srv/cachedb/map.cachedb.adapter'
 
@@ -18,6 +19,8 @@ export class EnvironmentProd {
 
   cacheDBAdapters: CacheDBAdapter[] = [new MapCacheDBAdapter(), new FirestoreCacheDBAdapter()]
   cacheDBDefaultTtl: number | undefined = undefined
+
+  firebaseStorageCacheDBAdapters: CacheDBAdapter[] = [new MapCacheDBAdapter(), new FirebaseStorageCacheDBAdapter()]
 
   firebaseStorageBucketName = 'test124-1621f.appspot.com'
 }
