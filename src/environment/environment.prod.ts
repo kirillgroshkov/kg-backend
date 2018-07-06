@@ -18,6 +18,8 @@ export class EnvironmentProd {
 
   cacheDBAdapters: CacheDBAdapter[] = [new MapCacheDBAdapter(), new FirestoreCacheDBAdapter()]
   cacheDBDefaultTtl: number | undefined = undefined
+
+  firebaseStorageBucketName = 'test124-1621f.appspot.com'
 }
 
 export type Environment = EnvironmentProd
