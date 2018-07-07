@@ -99,7 +99,8 @@ class ReleasesDao {
   }
 
   async getEtagMap (): Promise<StringMap> {
-    const m = await firebaseStorageCacheDB.get<Buffer>(CacheKey.etagMap)
+    // const m = await firebaseStorageCacheDB.get<Buffer>(CacheKey.etagMap)
+    const m = await cacheDB.get<Buffer>(CacheKey.etagMap)
     if (!m) return {} // default
     try {
       return JSON.parse(await zipUtil.inflateStr(m))
@@ -111,7 +112,11 @@ class ReleasesDao {
 
   async saveEtagMap (etagMap: StringMap): Promise<void> {
     const b = await zipUtil.deflate(JSON.stringify(etagMap || {}))
-    await firebaseStorageCacheDB.set(CacheKey.etagMap, b)
+    // console.log(b)
+    // await firebaseStorageCacheDB.set(CacheKey.etagMap, etagMap || {})
+    await cacheDB.set(CacheKey.etagMap, b).catch(err => {
+      console.log('error saving etagMap (temporary catch)')
+    })
   }
 
   // Now per User

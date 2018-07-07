@@ -6,8 +6,13 @@ export class FirebaseStorageCacheDBAdapter implements CacheDBAdapter {
 
   name = 'FirebaseStorage'
 
-  async set (key: string, value: string | Buffer, table = this.defaultTable): Promise<void> {
-    await firebaseStorageService.saveFile(`${table}/${key}`, value)
+  async set (key: string, value: any, table = this.defaultTable): Promise<void> {
+    let data = value
+    if (typeof value !== 'string' && !Buffer.isBuffer(value)) {
+      data = Buffer.from(JSON.stringify(value))
+    }
+    console.log({ data })
+    await firebaseStorageService.saveFile(`${table}/${key}`, data)
   }
 
   async get<T = Buffer> (key: string, table = this.defaultTable): Promise<T | undefined> {
