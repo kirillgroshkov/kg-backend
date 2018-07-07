@@ -18,5 +18,5 @@ module.exports = {
     },
   },
   unmockedModulePathPatterns: [],
-  // setupTestFrameworkScriptFile: '<rootDir>/src/test/setupJest.ts',
+  setupTestFrameworkScriptFile: '<rootDir>/src/test/setupJest.ts',
 }

@@ -9,6 +9,8 @@ import { env } from '@src/environment/environment'
 import { secretInit } from '@src/environment/secret'
 import { releasesService } from '@src/releases/releases.service'
 import { cacheDB, firebaseStorageCacheDB } from '@src/srv/cachedb/cachedb'
+import { FirebaseStorageCacheDBAdapter } from '@src/srv/cachedb/firebase.storage.cachedb.adapter'
+import { MapCacheDBAdapter } from '@src/srv/cachedb/map.cachedb.adapter'
 import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
 import { SLACK_CHANNEL, slackService } from '@src/srv/slack.service'
@@ -37,7 +39,8 @@ async function setup (): Promise<void> {
 
   cacheDB.adapters = env().cacheDBAdapters
   cacheDB.defaultTtl = env().cacheDBDefaultTtl
-  firebaseStorageCacheDB.adapters = env().firebaseStorageCacheDBAdapters
+  // hard-coded here for now
+  firebaseStorageCacheDB.adapters = [new MapCacheDBAdapter(), new FirebaseStorageCacheDBAdapter()]
 
   if (env().prod) {
     // Don't sleep :)

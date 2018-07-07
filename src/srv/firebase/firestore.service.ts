@@ -105,13 +105,18 @@ class FirestoreService {
       .delete()
   }
 
-  async test (): Promise<any> {
-    const col: QuerySnapshot = await this.db()
-      .collection('col1')
+  // https://firebase.google.com/docs/firestore/manage-data/delete-data#collections
+  async deleteCollection (colName: string): Promise<void> {
+    const s: QuerySnapshot = await this.db()
+      .collection(colName)
+      .orderBy('__name__')
       .get()
-    const r: any = {}
-    col.forEach(d => (r[d.id] = d.data()))
-    return r
+
+    if (!s.size) return
+
+    const batch = this.db().batch()
+    s.docs.forEach(doc => batch.delete(doc.ref))
+    await batch.commit()
   }
 }
 
