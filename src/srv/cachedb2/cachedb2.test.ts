@@ -31,11 +31,25 @@ test('file', async () => {
 test(
   'firebaseStorage',
   async () => {
-    let c = new CacheDB2([new FirebaseStorageCacheDB2Adapter()])
+    const c = new CacheDB2([new FirebaseStorageCacheDB2Adapter()])
     await runTests(c, 'tbl1')
+  },
+  120000,
+)
 
-    // Together with map adapter
-    c = new CacheDB2([new MapCacheDB2Adapter(), new FirebaseStorageCacheDB2Adapter()])
+test(
+  'firebaseStorage zipped',
+  async () => {
+    const c = new CacheDB2([new FirebaseStorageCacheDB2Adapter(true)])
+    await runTests(c, 'tbl1')
+  },
+  120000,
+)
+
+test(
+  'firebaseStorage with mapAdapter',
+  async () => {
+    const c = new CacheDB2([new MapCacheDB2Adapter(), new FirebaseStorageCacheDB2Adapter()])
     await runTests(c, 'tbl1')
   },
   120000,
@@ -44,11 +58,25 @@ test(
 test(
   'firestore',
   async () => {
-    let c = new CacheDB2([new FirestoreCacheDB2Adapter()])
+    const c = new CacheDB2([new FirestoreCacheDB2Adapter()])
     await runTests(c, 'tbl1')
+  },
+  120000,
+)
 
-    // Together with map adapter
-    c = new CacheDB2([new MapCacheDB2Adapter(), new FirestoreCacheDB2Adapter()])
+test(
+  'firestore zipped',
+  async () => {
+    const c = new CacheDB2([new FirestoreCacheDB2Adapter(true)])
+    await runTests(c, 'tbl1')
+  },
+  120000,
+)
+
+test(
+  'firestore with mapAdapter',
+  async () => {
+    const c = new CacheDB2([new MapCacheDB2Adapter(), new FirestoreCacheDB2Adapter()])
     await runTests(c, 'tbl1')
   },
   120000,

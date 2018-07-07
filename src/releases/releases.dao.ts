@@ -111,7 +111,7 @@ class ReleasesDao {
   }
 
   async saveEtagMap (etagMap: StringMap): Promise<void> {
-    const b = await zipUtil.deflate(JSON.stringify(etagMap || {}))
+    const b = await zipUtil.zip(JSON.stringify(etagMap || {}))
     // console.log(b)
     // await firebaseStorageCacheDB.set(CacheKey.etagMap, etagMap || {})
     await cacheDB.set(CacheKey.etagMap, b).catch(err => {

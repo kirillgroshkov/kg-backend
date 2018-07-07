@@ -1,12 +1,13 @@
 import { CacheDB2Adapter } from '@src/srv/cachedb2/cachedb2'
 import { firestoreService } from '@src/srv/firebase/firestore.service'
+import { zipUtil } from '@src/util/zip.util'
 
 interface WrappedBuffer {
   v: Buffer
 }
 
 export class FirestoreCacheDB2Adapter implements CacheDB2Adapter {
-  constructor () {}
+  constructor (public enableZip = false) {}
 
   name = 'Firestore'
 
@@ -14,12 +15,14 @@ export class FirestoreCacheDB2Adapter implements CacheDB2Adapter {
     const wb: WrappedBuffer = {
       v: value,
     }
+    if (this.enableZip) wb.v = await zipUtil.zip(wb.v)
     await firestoreService.saveDoc(table, wb, key)
   }
 
   async get (key: string, table: string): Promise<Buffer | undefined> {
     const wb = await firestoreService.getDoc<WrappedBuffer>(table, key)
-    return wb && wb.v
+    if (!wb) return
+    return wb.v && this.enableZip ? await zipUtil.unzip(wb.v) : wb.v
   }
 
   async delete (key: string, table: string): Promise<void> {
