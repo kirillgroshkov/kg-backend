@@ -92,9 +92,9 @@ class GithubService {
         noLog,
       })
     } catch (err) {
-      if (err && err.response && err.response.statusCode === 451) {
+      if (err && err.response && [451, 404].includes(err.response.statusCode)) {
         // Unavailable for legal reasons, e.g: "gloomyson/StarCraft"
-        console.log(`${repoFullName} resp 451`)
+        console.log(`${repoFullName} resp ${err.response.statusCode}`)
         return resp // empty
       }
       throw err // rethrow
