@@ -51,9 +51,12 @@ class FirestoreService {
       .doc(this.escapeDocId(docId!))
       .set(doc)
       .catch(err => {
-        sentryService.captureMessage(`error in saveDoc ${colName} docId=${docId}, docSize=${docSize}`)
+        // todo: fix it with cachedb2 and firebaseStorageAdapter
+        const msg = `error in saveDoc ${colName} docId=${docId}, docSize=${docSize}`
+        console.log(msg)
+        // sentryService.captureMessage(`error in saveDoc ${colName} docId=${docId}, docSize=${docSize}`)
         // console.log('str doc:\n', JSON.stringify(doc))
-        throw err
+        // throw err
       })
   }
 
