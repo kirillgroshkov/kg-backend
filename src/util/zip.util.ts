@@ -7,19 +7,23 @@ const inflate = promisify(zlib.inflate.bind(zlib))
 
 class ZipUtil {
   // string > zip
-  async deflate (buf: string, options?: ZlibOptions): Promise<Buffer> {
+  async zip (buf: Buffer, options?: ZlibOptions): Promise<Buffer> {
     return deflate(buf, options)
   }
 
   // zip > buffer
-  async inflate (buf: Buffer, options?: ZlibOptions): Promise<Buffer> {
+  async unzip (buf: Buffer, options?: ZlibOptions): Promise<Buffer> {
     return inflate(buf, options)
   }
 
   // convenience
-  // zip > string
-  async inflateStr (buf: Buffer, options?: ZlibOptions): Promise<string> {
-    return (await this.inflate(buf, options)).toString()
+  async zipString (s: string, options?: ZlibOptions): Promise<Buffer> {
+    return this.zip(Buffer.from(s), options)
+  }
+
+  // convenience
+  async unzipToString (buf: Buffer, options?: ZlibOptions): Promise<string> {
+    return (await this.unzip(buf, options)).toString()
   }
 }
 

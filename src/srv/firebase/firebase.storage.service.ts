@@ -14,7 +14,7 @@ class FirebaseStorageService {
       .bucket(env().firebaseStorageBucketName)
   }
 
-  async saveFile (fileName: string, data: string | Buffer): Promise<void> {
+  async saveFile (fileName: string, data: Buffer): Promise<void> {
     log(`>> Storage saveFile ${fileName} ${data.length} bytes`)
     await this.bucket()
       .file(fileName)
@@ -43,6 +43,43 @@ class FirebaseStorageService {
     await this.bucket()
       .file(fileName)
       .delete()
+      .catch(err => {
+        if (err && err.code === 404) {
+          log(`xx Storage deleteFile ${fileName} not found`)
+          return
+        }
+
+        log.error(`<< Storage deleteFile ${fileName} error: ${err.message}`)
+        return
+      })
+  }
+
+  async deleteFolder (folderPath: string): Promise<void> {
+    log(`xx Storage deleteFolder ${folderPath}`)
+    await this.bucket()
+      .deleteFiles({
+        prefix: folderPath,
+      })
+      .catch(err => {
+        if (err && err.code === 404) {
+          log(`xx Storage deleteFolder ${folderPath} not found`)
+          return
+        }
+
+        log.error(`<< Storage deleteFolder ${folderPath} error: ${err.message}`)
+        return
+      })
+  }
+
+  async getFiles (folderPath: string): Promise<string[]> {
+    const prefix = folderPath + '/'
+
+    const [files] = await this.bucket().getFiles({
+      prefix,
+      delimiter: '/',
+    })
+
+    return files.map(f => f.name.substr(prefix.length))
   }
 }
 

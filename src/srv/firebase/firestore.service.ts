@@ -51,9 +51,12 @@ class FirestoreService {
       .doc(this.escapeDocId(docId!))
       .set(doc)
       .catch(err => {
-        sentryService.captureMessage(`error in saveDoc ${colName} docId=${docId}, docSize=${docSize}`)
+        // todo: fix it with cachedb2 and firebaseStorageAdapter
+        const msg = `error in saveDoc ${colName} docId=${docId}, docSize=${docSize}`
+        console.log(msg)
+        // sentryService.captureMessage(`error in saveDoc ${colName} docId=${docId}, docSize=${docSize}`)
         // console.log('str doc:\n', JSON.stringify(doc))
-        throw err
+        // throw err
       })
   }
 
@@ -105,13 +108,18 @@ class FirestoreService {
       .delete()
   }
 
-  async test (): Promise<any> {
-    const col: QuerySnapshot = await this.db()
-      .collection('col1')
+  // https://firebase.google.com/docs/firestore/manage-data/delete-data#collections
+  async deleteCollection (colName: string): Promise<void> {
+    const s: QuerySnapshot = await this.db()
+      .collection(colName)
+      .orderBy('__name__')
       .get()
-    const r: any = {}
-    col.forEach(d => (r[d.id] = d.data()))
-    return r
+
+    if (!s.size) return
+
+    const batch = this.db().batch()
+    s.docs.forEach(doc => batch.delete(doc.ref))
+    await batch.commit()
   }
 }
 
