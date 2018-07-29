@@ -2,10 +2,10 @@ import { CacheDB2Adapter } from '@src/srv/cachedb2/cachedb2'
 import { firebaseStorageService } from '@src/srv/firebase/firebase.storage.service'
 import { zipUtil } from '@src/util/zip.util'
 
-export class FirebaseStorageCacheDB2Adapter implements CacheDB2Adapter {
+export class FireStorageCachedb2Adapter implements CacheDB2Adapter {
   constructor (public enableZip = false) {}
 
-  name = 'FirebaseStorage'
+  name = 'FireStorage'
 
   async set (key: string, value: Buffer, table: string): Promise<void> {
     const data = this.enableZip ? await zipUtil.zip(value) : value

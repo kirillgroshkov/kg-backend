@@ -1,7 +1,3 @@
-import { CacheDBAdapter } from '@src/srv/cachedb/cachedb'
-import { FirestoreCacheDBAdapter } from '@src/srv/cachedb/firestore.cachedb.adapter'
-import { MapCacheDBAdapter } from '@src/srv/cachedb/map.cachedb.adapter'
-
 export class EnvironmentProd {
   name = 'prod'
   prod = true
@@ -15,9 +11,6 @@ export class EnvironmentProd {
   authEnabled = true
 
   slackWebhookUrl: string | undefined = 'https://hooks.slack.com/services/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'
-
-  cacheDBAdapters: CacheDBAdapter[] = [new MapCacheDBAdapter(), new FirestoreCacheDBAdapter()]
-  cacheDBDefaultTtl: number | undefined = undefined
 
   firebaseStorageBucketName = 'test124-1621f.appspot.com'
 }

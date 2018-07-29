@@ -1,5 +1,6 @@
-import { cacheDB, firebaseStorageCacheDB } from '@src/srv/cachedb/cachedb'
+import { fireStorageCacheDB, firestoreCacheDB } from '@src/srv/cachedb2/cachedb2'
 import { StringMap } from '@src/typings/other'
+import { timeUtil } from '@src/util/time.util'
 import { zipUtil } from '@src/util/zip.util'
 import { IRouterContext } from 'koa-router'
 import { DateTime } from 'luxon'
@@ -86,35 +87,30 @@ export interface UserFM {
 // Everything Data-related should be here
 class ReleasesDao {
   async getLastCheckedReleases (): Promise<number> {
-    const since = Math.floor(
-      DateTime.local()
-        .minus({ days: 7 })
-        .valueOf() / 1000,
-    )
-    return await cacheDB.getOrDefault<number>(CacheKey.lastCheckedReleases, since)
+    const r = await firestoreCacheDB.getString(CacheKey.lastCheckedReleases)
+    if (r) {
+      return Number(r)
+    } else {
+      const def = timeUtil.toUnixtime(DateTime.local().minus({ days: 7 }))
+      return def
+    }
   }
 
   async saveLastCheckedReleases (lastCheckedReleases: number): Promise<void> {
-    await cacheDB.set(CacheKey.lastCheckedReleases, lastCheckedReleases)
+    await firestoreCacheDB.setString(CacheKey.lastCheckedReleases, '' + lastCheckedReleases)
   }
 
   async getEtagMap (): Promise<StringMap> {
-    // const m = await firebaseStorageCacheDB.get<Buffer>(CacheKey.etagMap)
-    const m = await cacheDB.get<Buffer>(CacheKey.etagMap)
-    if (!m) return {} // default
     try {
-      return JSON.parse(await zipUtil.inflateStr(m))
+      return (await fireStorageCacheDB.getObject<StringMap>(CacheKey.etagMap)) || {}
     } catch (err) {
       console.warn('error reading etagMap')
       return {}
     }
   }
 
-  async saveEtagMap (etagMap: StringMap): Promise<void> {
-    const b = await zipUtil.zip(JSON.stringify(etagMap || {}))
-    // console.log(b)
-    // await firebaseStorageCacheDB.set(CacheKey.etagMap, etagMap || {})
-    await cacheDB.set(CacheKey.etagMap, b).catch(err => {
+  async saveEtagMap (etagMap: StringMap = {}): Promise<void> {
+    await fireStorageCacheDB.setObject(CacheKey.etagMap, etagMap).catch(err => {
       console.log('error saving etagMap (temporary catch)')
     })
   }
@@ -143,6 +139,7 @@ class ReleasesDao {
 
   async getUser (uid: string): Promise<User> {
     if (!uid) return undefined as any
+    return firestoreCacheDB.getO
     return cacheDB.get(uid, Table.users)
   }
 

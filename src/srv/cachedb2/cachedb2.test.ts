@@ -1,7 +1,7 @@
 import { cacheDir } from '@src/cnst/paths.cnst'
 import { CacheDB2 } from '@src/srv/cachedb2/cachedb2'
 import { FileCacheDB2Adapter } from '@src/srv/cachedb2/file.cachedb2.adapter'
-import { FirebaseStorageCacheDB2Adapter } from '@src/srv/cachedb2/firebase.storage.cachedb2.adapter'
+import { FireStorageCachedb2Adapter } from '@src/srv/cachedb2/fireStorage.cachedb2.adapter'
 import { FirestoreCacheDB2Adapter } from '@src/srv/cachedb2/firestore.cachedb2.adapter'
 import { MapCacheDB2Adapter } from '@src/srv/cachedb2/map.cachedb2.adapter'
 
@@ -29,27 +29,27 @@ test('file', async () => {
 })
 
 test(
-  'firebaseStorage',
+  'fireStorage',
   async () => {
-    const c = new CacheDB2([new FirebaseStorageCacheDB2Adapter()])
+    const c = new CacheDB2([new FireStorageCachedb2Adapter()])
     await runTests(c, 'tbl1')
   },
   120000,
 )
 
 test(
-  'firebaseStorage zipped',
+  'fireStorage zipped',
   async () => {
-    const c = new CacheDB2([new FirebaseStorageCacheDB2Adapter(true)])
+    const c = new CacheDB2([new FireStorageCachedb2Adapter(true)])
     await runTests(c, 'tbl1')
   },
   120000,
 )
 
 test(
-  'firebaseStorage with mapAdapter',
+  'fireStorage with mapAdapter',
   async () => {
-    const c = new CacheDB2([new MapCacheDB2Adapter(), new FirebaseStorageCacheDB2Adapter()])
+    const c = new CacheDB2([new MapCacheDB2Adapter(), new FireStorageCachedb2Adapter()])
     await runTests(c, 'tbl1')
   },
   120000,

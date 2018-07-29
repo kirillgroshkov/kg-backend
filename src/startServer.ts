@@ -5,12 +5,15 @@ const bootstrapStarted = Date.now()
 import 'reflect-metadata'
 import '@src/polyfills'
 import { api } from '@src/api'
+import { cacheDir } from '@src/cnst/paths.cnst'
 import { env } from '@src/environment/environment'
 import { secretInit } from '@src/environment/secret'
 import { releasesService } from '@src/releases/releases.service'
-import { cacheDB, firebaseStorageCacheDB } from '@src/srv/cachedb/cachedb'
-import { FirebaseStorageCacheDBAdapter } from '@src/srv/cachedb/firebase.storage.cachedb.adapter'
-import { MapCacheDBAdapter } from '@src/srv/cachedb/map.cachedb.adapter'
+import { fireStorageCacheDB, firestoreCacheDB } from '@src/srv/cachedb2/cachedb2'
+import { FileCacheDB2Adapter } from '@src/srv/cachedb2/file.cachedb2.adapter'
+import { FireStorageCachedb2Adapter } from '@src/srv/cachedb2/fireStorage.cachedb2.adapter'
+import { FirestoreCacheDB2Adapter } from '@src/srv/cachedb2/firestore.cachedb2.adapter'
+import { MapCacheDB2Adapter } from '@src/srv/cachedb2/map.cachedb2.adapter'
 import { dontsleepService } from '@src/srv/dontsleep.service'
 import { sentryService } from '@src/srv/sentry.service'
 import { SLACK_CHANNEL, slackService } from '@src/srv/slack.service'
@@ -25,6 +28,7 @@ Promise.resolve()
   })
   .catch(err => {
     console.error('Error in startServer', err)
+    process.exit(-1)
   })
 
 ////
@@ -37,10 +41,22 @@ async function setup (): Promise<void> {
   secretInit()
   sentryService.init()
 
-  cacheDB.adapters = env().cacheDBAdapters
-  cacheDB.defaultTtl = env().cacheDBDefaultTtl
-  // hard-coded here for now
-  firebaseStorageCacheDB.adapters = [new MapCacheDBAdapter(), new FirebaseStorageCacheDBAdapter()]
+  if (env().prod) {
+    firestoreCacheDB.adapters = [new MapCacheDB2Adapter(), new FirestoreCacheDB2Adapter()]
+    fireStorageCacheDB.adapters = [new MapCacheDB2Adapter(), new FireStorageCachedb2Adapter(true)]
+  } else {
+    // dev
+    firestoreCacheDB.adapters = [
+      new MapCacheDB2Adapter(),
+      // new FileCacheDB2Adapter({cacheDirPath: cacheDir}),
+      new FirestoreCacheDB2Adapter(),
+    ]
+    fireStorageCacheDB.adapters = [
+      new MapCacheDB2Adapter(),
+      // new FileCacheDB2Adapter({cacheDirPath: cacheDir}),
+      new FireStorageCachedb2Adapter(true),
+    ]
+  }
 
   if (env().prod) {
     // Don't sleep :)

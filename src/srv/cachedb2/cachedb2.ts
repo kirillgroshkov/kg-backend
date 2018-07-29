@@ -1,3 +1,5 @@
+import { MapCacheDB2Adapter } from '@src/srv/cachedb2/map.cachedb2.adapter'
+
 export interface CacheDB2Adapter {
   name: string
   set (key: string, value: Buffer, table: string): Promise<void>
@@ -9,7 +11,7 @@ export interface CacheDB2Adapter {
 }
 
 export class CacheDB2 {
-  constructor (public adapters: CacheDB2Adapter[], public defaultTable = 'cacheDB') {}
+  constructor (public adapters: CacheDB2Adapter[] = [new MapCacheDB2Adapter()], public defaultTable = 'cacheDB') {}
 
   //
   // convenience methods
@@ -121,3 +123,6 @@ export class CacheDB2 {
     return Buffer.from(s)
   }*/
 }
+
+export const firestoreCacheDB = new CacheDB2()
+export const fireStorageCacheDB = new CacheDB2()
