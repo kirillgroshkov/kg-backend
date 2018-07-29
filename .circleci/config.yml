@@ -5,7 +5,7 @@
 
 version: 2
 jobs:
-  build:
+  build-job:
     docker:
       - image: naturalcycles/ci-node:latest
     working_directory: ~/repo
@@ -31,3 +31,13 @@ jobs:
             #sleep 60
             now alias -t $NOW_TOKEN
             now logs kg-backend.now.sh -t $NOW_TOKEN
+
+workflows:
+  version: 2
+
+  build-workflow:
+    jobs:
+      - build-job:
+          filters:
+            branches:
+              only: master
