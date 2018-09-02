@@ -23,4 +23,6 @@ UserInterfaceState.xcuserstate
 /www
 /secret
 /cache
+/report
+/coverage
 /src/scripts/try*

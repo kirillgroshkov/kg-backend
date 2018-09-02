@@ -39,6 +39,8 @@ exclude_patterns:
   - "**/*.mock.*"
   - "**/*.d.ts"
   - "build/"
+  - "report/"
+  - "coverage/"
   - "cache/"
   - "patch/"
   - "ex/"

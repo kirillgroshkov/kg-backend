@@ -4,27 +4,45 @@
 #
 
 version: 2
+
+#
+# Defaults
+#
+defaults: &defaults
+  docker:
+    - image: naturalcycles/ci-node:latest
+  working_directory: ~/repo
+  environment:
+    CC_TEST_REPORTER_ID: a5d8f12b329ad6a3cd085337e5cd2488b09e9168cf6f05a13afd804f5b487be7
+
+restore_cache: &restore_cache
+  key: deps-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-v1-{{ checksum "yarn.lock" }}
+
+save_cache: &save_cache
+  paths:
+    - node_modules
+  key: deps-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-v1-{{ checksum "yarn.lock" }}
+
+#
+# Jobs
+#
 jobs:
   build-job:
-    docker:
-      - image: naturalcycles/ci-node:latest
-    working_directory: ~/repo
+    <<: *defaults
     steps:
       - checkout
-      # env variables
       - run: echo 'export GIT_MSG=`git log -1 --pretty=%B`' >> $BASH_ENV
-      - restore_cache:
-          key: dependencies-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-v2-{{ checksum "yarn.lock" }}
-      - run: yarn --pure-lockfile
-      - save_cache:
-          paths:
-            - node_modules
-          key: dependencies-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-v2-{{ checksum "yarn.lock" }}
 
+      # Yarn
+      - restore_cache: *restore_cache
+      - run: yarn --pure-lockfile
+      - save_cache: *save_cache
+
+      # Deploy
       - run:
           name: Deploy
           command: |
-            yarn global add now@^11.0.0
+            yarn global add now@latest
             yarn build
             now -t $NOW_TOKEN remove kg-backend --yes || true
             now -t $NOW_TOKEN --public --npm --regions bru
@@ -32,6 +50,34 @@ jobs:
             now alias -t $NOW_TOKEN
             now logs kg-backend.now.sh -t $NOW_TOKEN
 
+  test-job:
+    <<: *defaults
+    steps:
+      - checkout
+
+      # Yarn
+      - restore_cache: *restore_cache
+      - run: yarn --pure-lockfile
+
+      # Test
+      - run:
+          name: Test
+          command: |
+            cc-test-reporter before-build
+            yarn test-ci
+            cc-test-reporter after-build -t lcov ./coverage/lcov.info
+
+      # Artifacts
+      - store_test_results:
+          path: report
+      - store_artifacts:
+          path: report
+      - store_artifacts:
+          path: coverage
+
+#
+# Workflows
+#
 workflows:
   version: 2
 
@@ -41,3 +87,6 @@ workflows:
           filters:
             branches:
               only: master
+      - test-job:
+          requires:
+            - build-job

@@ -15,6 +15,7 @@
     "prettier-do": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,scss,graphql,json}'",
     "prettier-all": "yarn prettier-do && yarn tslint-all",
     "test": "jest",
+    "test-ci": "jest --coverage --ci --reporters=default --reporters=jest-junit",
     "upgrade-shared": "yarn upgrade kg-shared @naturalcycles/shared-dev",
     "deploy": "yarn build && now --public --npm && now alias",
     "deploy-replace": "yarn build && now remove kg-backend --yes && now --public --npm && now alias",
@@ -78,6 +79,7 @@
     "husky": "^0.14.3",
     "jest": "^23.5.0",
     "jest-fetch-mock": "^1.6.5",
+    "jest-junit": "^5.1.0",
     "lint-staged": "^7.2.2",
     "prettier": "^1.14.2",
     "ts-jest": "^23.1.4",
@@ -85,6 +87,14 @@
     "tslint": "^5.11.0",
     "typescript": "~3.0.3",
     "typescript-json-schema": "^0.32.0"
+  },
+  "jest-junit": {
+    "suiteName": "jest tests",
+    "output": "./report/jest-junit.xml",
+    "classNameTemplate": "{classname}-{title}",
+    "titleTemplate": "{classname}-{title}",
+    "ancestorSeparator": " › ",
+    "usePathForSuiteName": "true"
   },
   "author": "Kirill Groshkov <1@inventix.ru>",
   "license": "MIT"

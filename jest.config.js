@@ -18,4 +18,10 @@ module.exports = {
   },
   unmockedModulePathPatterns: [],
   setupTestFrameworkScriptFile: '<rootDir>/src/test/setupJest.ts',
+  collectCoverageFrom : [
+    'src/**/*.ts',
+    '!src/typings/**',
+    '!src/scripts/**',
+    '!src/environment/**',
+  ],
 }
