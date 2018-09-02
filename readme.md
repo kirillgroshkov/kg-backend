@@ -8,6 +8,7 @@
 [![](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Maintainability](https://api.codeclimate.com/v1/badges/be3e19f34e16a3f8466d/maintainability)](https://codeclimate.com/github/kirillgroshkov/kg-backend/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/be3e19f34e16a3f8466d/test_coverage)](https://codeclimate.com/github/kirillgroshkov/kg-backend/test_coverage)
 
 Currently powers:
 
