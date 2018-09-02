@@ -7,6 +7,7 @@
 ![](https://circleci.com/gh/kirillgroshkov/kg-backend.svg?style=shield&circle-token=77341500f3a17b11e8ee48350ba5032c261ffc77)
 [![](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Maintainability](https://api.codeclimate.com/v1/badges/be3e19f34e16a3f8466d/maintainability)](https://codeclimate.com/github/kirillgroshkov/kg-backend/maintainability)
 
 Currently powers:
 
