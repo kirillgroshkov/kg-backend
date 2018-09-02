@@ -87,6 +87,4 @@ workflows:
           filters:
             branches:
               only: master
-      - test-job:
-          requires:
-            - build-job
+      - test-job
