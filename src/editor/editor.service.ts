@@ -2,7 +2,7 @@ import { api } from '@src/api'
 import { schemaService } from '@src/editor/schema.service'
 import { AppError } from '@src/error/app.error'
 import { firestoreService } from '@src/srv/firebase/firestore.service'
-import * as P from 'bluebird'
+import promiseProps = require('p-props')
 
 class EditorService {
   async getAllData (project: string): Promise<any> {
@@ -13,7 +13,7 @@ class EditorService {
       props[c] = firestoreService.getCollectionData(`${project}_${c}`)
     })
 
-    return P.props(props)
+    return promiseProps(props)
   }
 
   async getData (project: string, colName: string): Promise<any> {

@@ -23,4 +23,4 @@ export class EnvironmentDev extends EnvironmentProd {
   cacheDBDefaultTtl: number | undefined = 3600 // 1 hour
 }
 
-export default new EnvironmentDev()
+export const _envDev = new EnvironmentDev()

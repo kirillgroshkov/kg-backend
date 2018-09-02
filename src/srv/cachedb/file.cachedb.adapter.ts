@@ -1,6 +1,6 @@
 import { CacheDBAdapter } from '@src/srv/cachedb/cachedb'
-import * as P from 'bluebird'
 import * as fs from 'fs-extra'
+import * as promiseMap from 'p-map'
 import * as path from 'path'
 
 const EXT = '.json'
@@ -81,7 +81,7 @@ export class FileCacheDBAdapter implements CacheDBAdapter {
     if (!keys) return undefined
 
     const r: { [k: string]: T } = {}
-    await P.map(keys, async k => {
+    await promiseMap(keys, async k => {
       const filePath = path.join(this.cacheDirPath, table, k + EXT)
       const v = await fs.readFile(filePath, 'utf8')
       r[k] = v ? JSON.parse(v) : undefined

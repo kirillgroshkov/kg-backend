@@ -2,14 +2,18 @@ import { DocumentSnapshot, Firestore, Query, QueryDocumentSnapshot, QuerySnapsho
 import { memo } from '@src/decorators/memo.decorator'
 import { firebaseService } from '@src/srv/firebase/firebase.service'
 import { log } from '@src/srv/log.service'
-import { sentryService } from '@src/srv/sentry.service'
 import { stringUtil } from '@src/util/string.util'
 
 class FirestoreService {
   @memo()
   db (): FirebaseFirestore.Firestore {
     log('FirestoreService init...')
-    return firebaseService.admin().firestore()
+    const firestore = firebaseService.admin().firestore()
+    firestore.settings({
+      timestampsInSnapshots: true,
+    })
+
+    return firestore
   }
 
   private escapeDocId (docId: string): string {

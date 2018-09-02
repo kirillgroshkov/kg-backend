@@ -1,5 +1,5 @@
-import * as P from 'bluebird'
 import * as fs from 'fs-extra'
+import promiseMap from 'p-map'
 import * as TJS from 'typescript-json-schema'
 import { log } from '../../srv/log.service'
 
@@ -26,7 +26,7 @@ class JsonSchemaService {
     })
     */
     // const schema = TJS.generateSchema(program, "MyType", settings);
-    await P.map(
+    await promiseMap(
       types,
       async t => {
         const schema = TJS.generateSchema(program, t, settings)

@@ -3,7 +3,9 @@ import { GotJSONOptions, Response } from 'got'
 import * as got from 'got'
 import { log } from './log.service'
 
-export interface GotResponse<T> extends Response<T> {}
+export interface GotResponse<T> extends Response<any> {
+  body: T
+}
 
 export interface GotOptions extends GotJSONOptions {
   etagMap?: StringMap

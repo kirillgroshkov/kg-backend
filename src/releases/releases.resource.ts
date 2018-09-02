@@ -1,4 +1,3 @@
-import { githubService } from '@src/releases/github.service'
 import { releasesDao } from '@src/releases/releases.dao'
 import { releasesService } from '@src/releases/releases.service'
 import * as KoaRouter from 'koa-router'

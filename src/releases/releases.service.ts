@@ -14,9 +14,10 @@ import { SLACK_CHANNEL, slackService } from '@src/srv/slack.service'
 import { StringMap } from '@src/typings/other'
 import { by } from '@src/util/object.util'
 import { LUXON_ISO_DATE_FORMAT, timeUtil } from '@src/util/time.util'
-import * as P from 'bluebird'
 import { IRouterContext } from 'koa-router'
 import { DateTime } from 'luxon'
+import * as promiseMap from 'p-map'
+import promiseProps = require('p-props')
 
 export interface AuthInput {
   username: string
@@ -169,7 +170,7 @@ class ReleasesService {
       ].join('\n'),
     )
 
-    await P.map(
+    await promiseMap(
       repos,
       async repo => {
         try {
@@ -276,7 +277,7 @@ class ReleasesService {
 
     const feed = this.firestoreGetReleases(timeUtil.isoToUnixtime(minIncl), timeUtil.isoToUnixtime(maxExcl))
 
-    const p = await P.props({
+    const p = await promiseProps({
       feed,
       // rmap: this.getCachedStarredReposMap(),
       rateLimit: githubService.getRateLimit(u),
@@ -285,7 +286,7 @@ class ReleasesService {
 
     const rmap = by(u.starredRepos || [], 'fullName')
 
-    const releases = p.feed
+    const releases = (p.feed as Release[])
       .filter(r => {
         // only show releases belonging to the user!
         return !!rmap[r.repoFullName]
@@ -435,7 +436,7 @@ class ReleasesService {
 
     let emailsSent = 0
 
-    await P.map(
+    await promiseMap(
       users,
       async u => {
         if (!u.settings || !u.settings.notificationEmail) return // disabled

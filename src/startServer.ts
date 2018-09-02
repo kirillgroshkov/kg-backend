@@ -2,7 +2,6 @@ console.log('startServer...')
 const bootstrapStarted = Date.now()
 
 /* tslint:disable:ordered-imports */
-import 'reflect-metadata'
 import '@src/polyfills'
 import { api } from '@src/api'
 import { env } from '@src/environment/environment'

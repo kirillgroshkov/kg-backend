@@ -24,4 +24,4 @@ export class EnvironmentProd {
 
 export type Environment = EnvironmentProd
 
-export default new EnvironmentProd()
+export const _envProd = new EnvironmentProd()

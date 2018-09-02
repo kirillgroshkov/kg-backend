@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
+    // "allowSyntheticDefaultImports": true,
     "declaration": false,
     "experimentalDecorators": true,
     "lib": [
@@ -12,11 +12,16 @@
     ],
     "moduleResolution": "node",
     "module": "commonjs",
+    // "esModuleInterop": true,
     "target": "es2017",
     "strict": true,
     "outDir": "./dist",
     "sourceMap": true,
     "baseUrl": "./",
+    /*"typeRoots": [
+      "node_modules/@types",
+      "src/typings"
+    ],*/
     "paths": {
       "*": ["*"],
       "@src/*": ["src/*", "dist/*"]

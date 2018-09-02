@@ -1,11 +1,10 @@
 module.exports = {
   transform: {
-    '^.+\\.tsx?$': '<rootDir>/node_modules/ts-jest/preprocessor.js',
+    '^.+\\.tsx?$': 'ts-jest',
   },
   testRegex: '(/__tests__/.*|(\\.|/)(test|spec|jest))\\.(tsx?)$',
   testPathIgnorePatterns: ['<rootDir>/src/environment/'],
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json'],
-  // testResultsProcessor: 'jest-junit',
   skipNodeResolution: true,
   moduleNameMapper: {
     // should match aliases from tsconfig.json
@@ -14,7 +13,7 @@ module.exports = {
   },
   globals: {
     'ts-jest': {
-      skipBabel: true,
+      // skipBabel: false,
     },
   },
   unmockedModulePathPatterns: [],

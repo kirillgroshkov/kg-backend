@@ -1,11 +1,12 @@
-import { Environment } from './environment.prod'
+import { _envDev } from '@src/environment/environment.dev'
+import { _envProd, Environment } from './environment.prod'
 
 let environment: Environment
 
 if (process.env.NOW) {
-  environment = require('./environment.prod').default
+  environment = _envProd
 } else {
-  environment = require('./environment.dev').default
+  environment = _envDev
 }
 
 export function env (): Environment {
